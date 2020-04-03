@@ -1,0 +1,31 @@
+{
+  "name": "nunjucks-template-plugin",
+  "version": "1.0.0",
+  "description": "",
+  "main": "webpack.config.js",
+  "scripts": {
+    "start": "webpack --mode production"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/cli": "^7.8.3",
+    "@babel/core": "^7.8.0",
+    "@babel/plugin-transform-runtime": "^7.8.3",
+    "@babel/polyfill": "^7.8.3",
+    "@babel/preset-env": "^7.8.2",
+    "@babel/register": "^7.8.0",
+    "babel-loader": "^8.0.6",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11",
+    "css-loader": "^3.4.2",
+    "mini-css-extract-plugin": "^0.9.0",
+    "sass": "^1.24.4",
+    "sass-loader": "^8.0.2"
+  },
+  "dependencies": {
+    "nunjucks": "^3.2.1",
+    "shelljs": "^0.8.3"
+  }
+}
