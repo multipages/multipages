@@ -1,12 +1,12 @@
 const path = require('path');
 
-const NunjucksTemplatePlugin = require('./plugins/NunjucksTemplatePlugin');
+// const NunjucksTemplatePlugin = require('./plugins/NunjucksTemplatePlugin');
+const NunjucksTemplateWebpackPlugin = require('./plugins');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const sass = require('sass');
 
-const data = require('./src/data');
-
+const merge = (...targets) => Object.assign({}, ...targets);
 
 module.exports = (argv, mode) => ({
   entry: ['./src/entry.js'],
@@ -48,19 +48,43 @@ module.exports = (argv, mode) => ({
       filename: `styles/[name].[hash:8].css`,
       esModule: true,
     }),
-    new NunjucksTemplatePlugin({
+    // new NunjucksTemplatePlugin({
+    //   rootTemplatePath: './src/templates',
+    //   pagesTemplatePath: './src/templates/pages',
+    //   renderData: ({ slug }) => {
+    //     try {
+    //       return require(`./src/data${slug}`);
+    //     } catch(err) {
+    //       return require(`./src/data/`);
+    //     }
+    //   },
+    //   slugs: {
+    //     'produtos/@product': require('./src/data/produtos/@product'),
+    //     'clientes/@client': require('./src/data/clientes/@client'),
+    //   }
+    // })
+    new NunjucksTemplateWebpackPlugin({
       rootTemplatePath: './src/templates',
       pagesTemplatePath: './src/templates/pages',
-      renderData: ({ slug }) => {
+      data({ route }) {
+        let dataBase = require('./src/data');
+        let dataRoute = {};
+        let data = {}
+
         try {
-          return require(`./src/data${slug}`);
+          dataRoute = require(`./src/data${route}`);
         } catch(err) {
-          return require(`./src/data/`);
+          dataRoute = dataBase;
         }
-      },
-      slugs: {
-        'produtos/@product': require('./src/data/produtos/@product'),
-        'clientes/@client': require('./src/data/clientes/@client'),
+
+        // If multiple templates
+        if ('items' in dataRoute) {
+          return dataRoute.items.map(itemData => merge(dataBase, itemData));
+        }
+
+        return [
+          merge(dataBase, dataRoute)
+        ];
       }
     })
   ]

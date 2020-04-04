@@ -3,20 +3,25 @@ const path = require('path');
 
 const shell = require('shelljs');
 
-const prepareRender = templateEngine => (filename, data) => {
-  try {
-    return templateEngine.render(filename, data);
-  } catch(err) {
-    console.error(err);
+const removeFile = (filename) => {
+  const filepath = path.resolve(filename);
+
+  if (fs.existsSync(filepath)) {
+    return false;
   }
-};
 
-const createDir = (dirname, { output }) => {
+  shell.rm(path.resolve(filepath));
+}
+
+const createDir = (dirname) => {
+  const dirpath = path.resolve(dirname);
+
+  if (fs.existsSync(dirpath)) {
+    return false;
+  }
+
   try {
-    const dirpath = `${output}${dirname}`;
-
-    shell.rm('-rf', path.resolve(dirpath));
-    shell.mkdir('-p', path.resolve(dirpath));
+    shell.mkdir('-p', dirpath);
 
     return true;
   } catch(err) {
@@ -24,49 +29,18 @@ const createDir = (dirname, { output }) => {
   }
 };
 
-const createFile = (dirname, { name, output, htmlString }) => {
+const createFile = (filename, htmlString ) => {
   try {
-    fs.writeFileSync(
-      path.resolve(`${output}${dirname}/${name}.html`),
-      htmlString
-    );
+    fs.writeFileSync(filename, htmlString);
+
     return true;
   } catch(err) {
     console.error(err);
   }
-};
-
-const createPage = (options, render) => {
-  const {
-    filename,
-    dirname,
-    name,
-    output,
-    data
-  } = options;
-
-  // Render page
-  let htmlString = render(filename, data);
-
-  // Create Directory Path
-  createDir(dirname, { output });
-
-  // Create File with content
-  createFile(dirname, {
-    name,
-    output,
-    htmlString
-  });
-};
-
-const getDataByPage = (resource, page) => {
-  return (typeof resource === 'function') ? resource(page) : resource;
 };
 
 module.exports = {
+  removeFile,
   createDir,
   createFile,
-  createPage,
-  getDataByPage,
-  prepareRender
 }

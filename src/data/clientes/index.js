@@ -1,3 +1,4 @@
 module.exports = {
-  title: 'Clientes'
+  title: 'Clientes',
+  slug: 'clientes'
 };
