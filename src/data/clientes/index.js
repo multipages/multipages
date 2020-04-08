@@ -1,4 +1,6 @@
 module.exports = {
-  title: 'Clientes',
-  slug: 'clientes'
+  data: {
+    title: 'Clientes',
+    slug: 'clientes'
+  }
 };

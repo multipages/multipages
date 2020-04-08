@@ -1,4 +1,9 @@
 module.exports = {
-  title: 'Products',
-  slug: 'produtos'
+  data: {
+    title: 'Products',
+    slug: 'produtos',
+    produtos: [
+
+    ]
+  }
 };

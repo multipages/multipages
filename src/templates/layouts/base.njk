@@ -4,6 +4,7 @@
   {% block meta %}
     {% include "includes/meta.njk" %}
   {% endblock %}
+  <link rel="stylesheet" href="{{ assets.css }}">
   <title>{{ title }}</title>
 </head>
 <body>
@@ -18,5 +19,7 @@
   {% block footer %}
     {% include "components/footer.njk" %}
   {% endblock %}
+
+  <script src="{{ assets.js }}"></script>
 </body>
 </html>

@@ -48,28 +48,13 @@ module.exports = (argv, mode) => ({
       filename: `styles/[name].[hash:8].css`,
       esModule: true,
     }),
-    // new NunjucksTemplatePlugin({
-    //   rootTemplatePath: './src/templates',
-    //   pagesTemplatePath: './src/templates/pages',
-    //   renderData: ({ slug }) => {
-    //     try {
-    //       return require(`./src/data${slug}`);
-    //     } catch(err) {
-    //       return require(`./src/data/`);
-    //     }
-    //   },
-    //   slugs: {
-    //     'produtos/@product': require('./src/data/produtos/@product'),
-    //     'clientes/@client': require('./src/data/clientes/@client'),
-    //   }
-    // })
     new NunjucksTemplateWebpackPlugin({
       rootTemplatePath: './src/templates',
       pagesTemplatePath: './src/templates/pages',
+      minify: true,
       data({ route }) {
         let dataBase = require('./src/data');
         let dataRoute = {};
-        let data = {}
 
         try {
           dataRoute = require(`./src/data${route}`);
@@ -77,14 +62,7 @@ module.exports = (argv, mode) => ({
           dataRoute = dataBase;
         }
 
-        // If multiple templates
-        if ('items' in dataRoute) {
-          return dataRoute.items.map(itemData => merge(dataBase, itemData));
-        }
-
-        return [
-          merge(dataBase, dataRoute)
-        ];
+        return dataRoute;
       }
     })
   ]

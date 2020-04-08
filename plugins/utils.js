@@ -4,13 +4,14 @@ const path = require('path');
 const shell = require('shelljs');
 
 const removeFile = (filename) => {
+
   const filepath = path.resolve(filename);
 
-  if (fs.existsSync(filepath)) {
+  if (!fs.existsSync(filepath)) {
     return false;
   }
 
-  shell.rm(path.resolve(filepath));
+  shell.rm('-rf', path.resolve(filepath));
 }
 
 const createDir = (dirname) => {

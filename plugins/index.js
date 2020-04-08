@@ -1,6 +1,9 @@
+const fs = require('fs');
 const path = require('path');
 
+const shell = require('shelljs');
 const nunjucks = require('nunjucks');
+const minifier = require('html-minifier-terser').minify;
 
 const { walkDir, sortPagePath } = require('./core');
 const { createFile, createDir, removeFile } = require('./utils');
@@ -14,92 +17,120 @@ module.exports = class NunjucksTemplateWebpackPlugin {
       pagesTemplatePath: './src',
       templateFilters: [],
       templateExtensions: [],
+      data: {},
+      re: {
+        templateExt: /\.(njk|nunjucks|html)$/g
+      },
       ...options
     };
-
-    this.setup();
   }
 
   apply(compiler) {
     // When compilation is done
-    compiler.hooks.done.tapAsync(PLUGIN_NAME, stats => this.start(stats));
+    compiler.hooks.done.tapAsync(PLUGIN_NAME, stats => {
+      this.setup(stats);
+      this.start();
+    });
   }
 
-  setup() {
-    this.resolvePathsFromObject(process.cwd(), this.options, [
-      'rootTemplatePath',
-      'pagesTemplatePath'
-    ]);
+  setupRootPagesRender() {
+    this.options.rootPagesRender = this.options.pagesTemplatePath.replace(`${this.options.rootTemplatePath}/`, '')
+  }
 
+  setupAssets() {
+    const assetsData = this.getAssetsFromCompilation();
+    const assets = {};
+
+    assetsData.forEach(asset => {
+      const [, type] = asset.name.match(/\.(\w+)$/);
+      assets[type] = asset.name;
+    });
+
+    this.assets = assets;
+  }
+
+  setup({ compilation }) {
+    this.setupRootPagesRender();
+    this.setupCompilation(compilation);
+    this.setupAssets();
     this.setupTemplateEngine();
     this.setupTemplateFilters();
     this.setupTemplateExtensions();
   }
 
-  start({ compilation }) {
-    this.setupCompilation(compilation);
+  getPages() {
+    return this.fileListSorted.map(page => {
+      const { dirname, filename, ext } = page;
 
-    this.pageList = this.getPageList();
-    this.pageListSorted = this.pageList.sort(sortPagePath);
-    this.pageDataList = this.getDataList();
-    this.pageRenderedList = this.getRenderedList();
+      let pageData = this.options.data({ route: dirname });
 
+      if (Array.isArray(pageData)) {
+        return pageData.map(({ params, data }) => {
+          let template = filename;
+          let dirPath = dirname;
+
+          Object.keys(params).forEach(paramId => {
+            template = template.replace(paramId, params[paramId]);
+            dirPath = dirPath.replace(paramId, params[paramId]);
+          });
+
+          return {
+            data: {...data, assets: this.assets },
+            ext,
+            route: dirname,
+            dirname: dirPath,
+            filename: template,
+          };
+        });
+      } else {
+        return {
+          filename,
+          dirname,
+          ext,
+          route: dirname,
+          data: { ...pageData.data, assets: this.assets }
+        }
+      }
+    }).flat(Infinity);
+  }
+
+  start() {
     const output = this.getOutputOptionsFromCompilation().path;
 
-    this.pageRenderedList.map(pageRendered => {
-      const dirname = path.resolve(`${output}${pageRendered.dirname}`);
-      const filename = path.resolve(`${output}${pageRendered.filename}`);
+    this.fileList = this.getFileList();
+    this.fileListSorted = this.fileList.sort(sortPagePath);
 
-      removeFile(filename)
+    this.pages = this.getPages();
+
+    this.pages.map(page => {
+      const dirname = path.resolve(`${output}${page.dirname}`);
+      const filename = path.resolve(`${output}${page.filename.replace(this.options.re.templateExt, '.html')}`);
+      let template = this.templateEngine.render(`${this.options.rootPagesRender}${page.route === '/' ? '' : page.route }/index${page.ext}`, page.data);
+
+      if (this.options.minify) {
+        template = minifier(template, {
+          // https://www.npmjs.com/package/html-minifier-terser#options-quick-reference
+          collapseWhitespace: true,
+          keepClosingSlash: true,
+          removeComments: true,
+          removeRedundantAttributes: true,
+          removeScriptTypeAttributes: true,
+          removeStyleLinkTypeAttributes: true,
+          useShortDoctype: true
+        });
+      }
+
+      let target = page.dirname === '/' ? filename : dirname;
+
+      removeFile(target);
       createDir(dirname);
-      createFile(filename, pageRendered.template)
+      createFile(filename, template);
     });
 
-  }
-
-  getDataList() {
-    return this.pageListSorted.map(page => {
-      const { dirname, filename } = page;
-
-      return {
-        filename,
-        dirname,
-        dataList: this.options.data({ route: dirname })
-      };
-    });
-  }
-
-  getRenderedList() {
-    return this.pageDataList.map((pageData) => {
-      return pageData.dataList.map(data => {
-        const { slug } = data;
-
-        const template = this.templateEngine.render(`${this.options.pagesTemplatePath}${pageData.filename}`, data);
-        const dirname = pageData.dirname.replace(/@\w+/, slug);
-        const filename = pageData.filename.replace(/@\w+(?=\/)/, slug).replace(/\.njk$/, '.html');
-
-        return {
-          slug,
-          template,
-          dirname: dirname.replace(/@\w+/, slug),
-          filename: filename.replace(/@\w+(?=\/)/, slug).replace(/\.njk$/, '.html'),
-        }
-      });
-    }).flat(Infinity);
   }
 
   hasParam(route) {
     return route.includes('@');
-  }
-
-  getData() {
-    return (typeof resource === 'function') ? resource(page) : resource;
-  }
-
-  resolvePathsFromObject(base, source, pathNameList) {
-    pathNameList.forEach(pathName => {
-      source[pathName] = source[pathName] ? path.resolve(base, source[pathName]) : source[pathName]
-    });
   }
 
   getOutputOptionsFromCompilation() {
@@ -110,8 +141,10 @@ module.exports = class NunjucksTemplateWebpackPlugin {
     return this.compilation.getAssets();
   }
 
-  getPageList() {
-    return walkDir(this.options.pagesTemplatePath);
+  getFileList() {
+    return walkDir(
+      path.resolve(process.cwd(), this.options.pagesTemplatePath)
+    );
   }
 
   setupCompilation(compilation) {
@@ -119,7 +152,9 @@ module.exports = class NunjucksTemplateWebpackPlugin {
   }
 
   setupTemplateEngine() {
-    this.templateEngine = new nunjucks.Environment(new nunjucks.FileSystemLoader(this.options.rootTemplatePath));
+    this.templateEngine = new nunjucks.Environment(new nunjucks.FileSystemLoader(
+      path.resolve(process.cwd(), this.options.rootTemplatePath)
+    ));
   }
 
   setupTemplateFilters() {

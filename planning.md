@@ -7,4 +7,6 @@
 [x] generate path list of pages
 [x] order page list
 [x] get slugs from pageTemplatePath
-[ ] get rendered pages
+[x] get rendered pages
+[x] find dynamic routes
+[ ] test diferent page location

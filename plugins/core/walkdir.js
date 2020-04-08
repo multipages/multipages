@@ -13,18 +13,20 @@ module.exports = function walkDir(dirPath) {
       const relativePath = filePath.replace(dirPath, '');
       const splitedPath = relativePath.split('\\');
 
-      const [name, ext] = splitedPath[splitedPath.length - 1].split(/\./);
+      const [name] = splitedPath[splitedPath.length - 1].split(/\./);
       const dirname = splitedPath.slice(0, splitedPath.length - 1).join('/');
       const filename = relativePath.replace(/\\/g, '/');
 
       if (stat.isDirectory()) {
-        walk(filePath);
-      } else {
-        paths.push({
-          dirname: dirname ? dirname : '/',
+        return walk(filePath);
+      }
+
+      if (/\.(njk|nunjucks|html)$/g.test(path.extname(filePath))) {
+        return paths.push({
           filename,
           name,
-          ext
+          dirname: dirname ? dirname : '/',
+          ext: path.extname(filePath)
         });
       }
     });
