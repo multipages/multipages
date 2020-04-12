@@ -15,6 +15,11 @@ module.exports = (argv, mode) => ({
     filename: `scripts/[name].[hash:8].js`,
     publicPath: '/',
   },
+  watch: true,
+  watchOptions: {
+    aggregateTimeout: 300,
+    poll: true
+  },
   module: {
     rules: [
       {
@@ -51,7 +56,7 @@ module.exports = (argv, mode) => ({
     new NunjucksTemplateWebpackPlugin({
       rootTemplatePath: './src/templates',
       pagesTemplatePath: './src/templates/pages',
-      minify: true,
+      minify: false,
       data({ route }) {
         let dataBase = require('./src/data');
         let dataRoute = {};

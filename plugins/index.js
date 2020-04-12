@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
+const glob = require('glob');
 const shell = require('shelljs');
 const nunjucks = require('nunjucks');
 const minifier = require('html-minifier-terser').minify;
@@ -26,10 +27,28 @@ module.exports = class NunjucksTemplateWebpackPlugin {
   }
 
   apply(compiler) {
+
+    // Called after setting up initial set of internal plugins
+    compiler.hooks.afterPlugins.tap(PLUGIN_NAME, compiler => {
+      removeFile(compiler.outputPath);
+    });
+
+    // Called after finishing and sealing the compilation.
+    compiler.hooks.afterCompile.tapAsync(PLUGIN_NAME, (compilation, callback) => {
+      this.watchPages = walkDir(this.options.rootTemplatePath);
+      this.watchPages.forEach(page => {
+        const templatePath = path.resolve(page.filename);
+        compilation.fileDependencies.add(templatePath);
+      });
+      callback();
+    });
+
     // When compilation is done
-    compiler.hooks.done.tapAsync(PLUGIN_NAME, stats => {
+    compiler.hooks.done.tapAsync(PLUGIN_NAME, (stats, callback) => {
+
       this.setup(stats);
       this.start();
+      callback();
     });
   }
 
