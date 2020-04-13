@@ -60,25 +60,13 @@ module.exports = class NunjucksTemplateWebpackPlugin {
 
     assetsData.forEach(asset => {
       const [, type] = asset.name.match(/\.(\w+)$/);
-      assets[type] = this.options.relativePathServer + asset.name;
+      assets[type] = asset.name;
     });
 
     this.assets = assets;
   }
 
-  isProduction() {
-    return this.options.mode === 'production';
-  }
-
-  setupModeSettings(compiler) {
-    const { mode, devServer } = compiler.options;
-
-    this.options.mode = mode;
-    this.options.relativePathServer = this.isProduction() ? '/' : `http://${devServer.host}:${devServer.port}${devServer.publicPath}`;
-  }
-
   setup({ compilation }, compiler) {
-    this.setupModeSettings(compiler);
     this.setupRootPagesRender();
     this.setupCompilation(compilation);
     this.setupAssets();
