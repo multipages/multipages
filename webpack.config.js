@@ -1,7 +1,8 @@
 const path = require('path');
 
 // const NunjucksTemplatePlugin = require('./plugins/NunjucksTemplatePlugin');
-const NunjucksTemplateWebpackPlugin = require('./plugins');
+const MultiPagePlugin = require('./plugins');
+const NunjucksTemplateExtension = require('./plugins/extensions/TemplateEngineNunjucksExtension');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const sass = require('sass');
@@ -14,11 +15,6 @@ module.exports = (argv, mode) => ({
     path: path.resolve(__dirname, 'dist'),
     filename: `scripts/[name].[hash:8].js`,
     publicPath: '/',
-  },
-  watch: true,
-  watchOptions: {
-    aggregateTimeout: 300,
-    poll: true
   },
   devServer: {
     contentBase: path.join(__dirname, 'dist'),
@@ -56,9 +52,13 @@ module.exports = (argv, mode) => ({
       filename: `styles/[name].[hash:8].css`,
       esModule: true,
     }),
-    new NunjucksTemplateWebpackPlugin({
+    new MultiPagePlugin({
       rootTemplatePath: './src/templates',
       pagesTemplatePath: './src/templates/pages',
+      templateEngine: new NunjucksTemplateExtension({
+        filters: [],
+        extensions: []
+      }),
       minify: false,
       data({ route }) {
         let dataBase = require('./src/data');

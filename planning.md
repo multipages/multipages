@@ -9,4 +9,13 @@
 [x] get slugs from pageTemplatePath
 [x] get rendered pages
 [x] find dynamic routes
-[ ] test diferent page location
+[x] test diferent page location
+
+# Part 2
+
+[ ] Extends for different Template Engines
+  [x] Nunjucks
+  [ ] Pug
+  [ ] EJS
+  [ ] Handlebars
+  [ ] Mustache

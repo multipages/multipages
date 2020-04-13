@@ -1,7 +1,10 @@
 module.exports = function (a, b) {
-  if (a.dirname.length > b.dirname.length) {
+  let aSize = a.dirname.split('/').length;
+  let bSize = b.dirname.split('/').length;
+
+  if (aSize > bSize) {
     return 1
-  } else if (a.dirname.length < b.dirname.length) {
+  } else if (aSize < bSize) {
     return -1;
   }
 
