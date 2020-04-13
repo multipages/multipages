@@ -20,6 +20,9 @@ module.exports = (argv, mode) => ({
     aggregateTimeout: 300,
     poll: true
   },
+  devServer: {
+    contentBase: path.join(__dirname, 'dist'),
+  },
   module: {
     rules: [
       {

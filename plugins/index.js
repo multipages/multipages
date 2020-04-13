@@ -27,7 +27,6 @@ module.exports = class NunjucksTemplateWebpackPlugin {
   }
 
   apply(compiler) {
-
     // Called after setting up initial set of internal plugins
     compiler.hooks.afterPlugins.tap(PLUGIN_NAME, compiler => {
       removeFile(compiler.outputPath);
@@ -45,8 +44,7 @@ module.exports = class NunjucksTemplateWebpackPlugin {
 
     // When compilation is done
     compiler.hooks.done.tapAsync(PLUGIN_NAME, (stats, callback) => {
-
-      this.setup(stats);
+      this.setup(stats, compiler);
       this.start();
       callback();
     });
@@ -62,13 +60,25 @@ module.exports = class NunjucksTemplateWebpackPlugin {
 
     assetsData.forEach(asset => {
       const [, type] = asset.name.match(/\.(\w+)$/);
-      assets[type] = asset.name;
+      assets[type] = this.options.relativePathServer + asset.name;
     });
 
     this.assets = assets;
   }
 
-  setup({ compilation }) {
+  isProduction() {
+    return this.options.mode === 'production';
+  }
+
+  setupModeSettings(compiler) {
+    const { mode, devServer } = compiler.options;
+
+    this.options.mode = mode;
+    this.options.relativePathServer = this.isProduction() ? '/' : `http://${devServer.host}:${devServer.port}${devServer.publicPath}`;
+  }
+
+  setup({ compilation }, compiler) {
+    this.setupModeSettings(compiler);
     this.setupRootPagesRender();
     this.setupCompilation(compilation);
     this.setupAssets();
@@ -94,20 +104,18 @@ module.exports = class NunjucksTemplateWebpackPlugin {
           });
 
           return {
-            data: {...data, assets: this.assets },
-            ext,
-            route: dirname,
             dirname: dirPath,
             filename: template,
+            template: `${this.options.rootPagesRender}${dirname === '/' ? '' : dirname }/index${ext}`,
+            data: {...data, assets: this.assets },
           };
         });
       } else {
         return {
           filename,
           dirname,
-          ext,
-          route: dirname,
-          data: { ...pageData.data, assets: this.assets }
+          template: `${this.options.rootPagesRender}${dirname === '/' ? '' : dirname }/index${ext}`,
+          data: { ...pageData.data, assets: this.assets },
         }
       }
     }).flat(Infinity);
@@ -124,7 +132,7 @@ module.exports = class NunjucksTemplateWebpackPlugin {
     this.pages.map(page => {
       const dirname = path.resolve(`${output}${page.dirname}`);
       const filename = path.resolve(`${output}${page.filename.replace(this.options.re.templateExt, '.html')}`);
-      let template = this.templateEngine.render(`${this.options.rootPagesRender}${page.route === '/' ? '' : page.route }/index${page.ext}`, page.data);
+      let template = this.templateEngine.render(page.template, page.data);
 
       if (this.options.minify) {
         template = minifier(template, {
