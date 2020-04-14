@@ -1,8 +1,8 @@
 <h1 align="center">
-  <img src="logo.jpg" alt="Multipage" />
+  <img src="logo.jpg" alt="Multipages" />
 </h1>
 
-> **Multipage is a static site generator** in form of webpack plugin that use your favorite  template engine and generate multiple pages and subpages
+> **Multipages is a static site generator** in form of webpack plugin that use your favorite  template engine and generate multiple pages and subpages
 
 ## Highlights
 
@@ -17,16 +17,16 @@
 #### Install
 
 ```
-  yarn add webpack @multipage/plugin @multipage/nunjucks-extension
+  yarn add webpack @multipages/plugin @multipages/nunjucks-extension
 ```
 
 #### Setup
 
-Add the MultiPage plugin into the webpack plugins array within `webpack.config.js` file
+Add the MultiPages plugin into the webpack plugins array within `webpack.config.js` file
 
 ```javascript
-const MultiPagePlugin = require('@multipage/plugin');
-const MultiPageNunjucksExtension = require('@multipage/nunjucks-extension')
+const MultiPagesPlugin = require('@multipages/plugin');
+const MultiPagesNunjucksExtension = require('@multipages/nunjucks-extension')
 
 module.exports = (argv, mode) => ({
   entry: ['./src/entry.js'],
@@ -39,10 +39,10 @@ module.exports = (argv, mode) => ({
     contentBase: path.join(__dirname, 'dist'),
   },
   plugins: [
-    new MultiPagePlugin({
+    new MultiPagesPlugin({
       rootTemplatePath: './src/templates',
       pagesTemplatePath: './src/templates/pages',
-      templateEngine: new MultiPageNunjucksExtension({
+      templateEngine: new MultiPagesNunjucksExtension({
         filters: [],
         extensions: []
       }),
@@ -106,11 +106,11 @@ templates
         `-- index.njk
 ```
 
-The Multipage Plugin will request the correspondent **data** file from the interface of plugin,
+The Multipages Plugin will request the correspondent **data** file from the interface of plugin,
 in there you can require it and return, then, the plugin will throughout the array of datas
 and generate all `@product` pages, see below the result and then an example of **data** file.
 
-> Look the `@` at the beginning in product folder, that's necessary to MultiPage create the routes and generate final folders
+> Look the `@` at the beginning in product folder, that's necessary to MultiPages create the routes and generate final folders
 
 ```
 dist
