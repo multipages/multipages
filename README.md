@@ -26,7 +26,7 @@ Add the MultiPages plugin into the webpack plugins array within `webpack.config.
 
 ```javascript
 const MultiPagesPlugin = require('@multipages/plugin');
-const MultiPagesNunjucksExtension = require('@multipages/nunjucks-extension')
+const MultiPagesNunjucksExtension = require('@multipages/nunjucks-extension');
 
 module.exports = (argv, mode) => ({
   entry: ['./src/entry.js'],
@@ -68,6 +68,7 @@ module.exports = (argv, mode) => ({
 
 | Name       | package                          | Status           |
 | ---------- | -------------------------------- | ---------------- |
+| multipages | @multipages/plugin               | Build Pass Bagde |
 | nunjucks   | @multipages/nunjucks-extension   | Build Pass Bagde |
 | pug        | @multipages/pug-extension        | Build Pass Bagde |
 | ejs        | @multipages/ejs-extension        | Build Pass Bagde |
@@ -113,7 +114,7 @@ dist
 ```
 
 You can return a specific **data** file per route, because at the definition of options on multipages plugin, you define data function, thats receive each processed route
-and expects a correspondent `data object`, see below a simple **data** file structure;
+and expects a correspondent `data object`, see below a simple **data** file structure:
 
 ```javascript
 /**
@@ -141,7 +142,7 @@ first we have to exports an vector (`Array`) and append all pages objects, each 
 
 When multipages require the respective data object it will inform the route `/products/@product` for the user to facilitate the retrieval of the data file.
 
-Plugin Interface Example
+**Plugin Interface Example**
 
 ```javascript
 /**
@@ -155,7 +156,7 @@ new MultiPagesPlugin({
 });
 ```
 
-Example of Data
+**Example of Data**
 
 ```javascript
 /**
