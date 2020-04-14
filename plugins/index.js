@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 
 const shell = require('shelljs');
-const nunjucks = require('nunjucks');
 const minifier = require('html-minifier-terser').minify;
 
 const { walkDir, sortPagePath } = require('./core');
@@ -10,7 +9,7 @@ const { createFile, createDir, removeFile } = require('./utils');
 
 const PLUGIN_NAME = 'MultiPagePlugin';
 
-module.exports = class MultiPagePlugin {
+class MultiPagePlugin {
   constructor(options = {}) {
     this.options = {
       rootTemplatePath: './src',
@@ -152,3 +151,7 @@ module.exports = class MultiPagePlugin {
       : template;
   }
 }
+
+
+
+module.exports =
