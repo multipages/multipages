@@ -63,6 +63,16 @@ module.exports = (argv, mode) => ({
   ]
 };
 ```
+
+#### Options
+
+| Name              | Type       | Default  | Description                                                                              |
+| ----------------- | ---------- | -------- | ---------------------------------------------------------------------------------------- |
+| rootTemplatePath  | `String`   | './src'  | Where all yours includes, partials, components, pages live                               |
+| pagesTemplatePath | `String`   | './src'  | Where all your structure pages live                                                      |
+| data              | `Function` | `Object` | The `data` function thats receive the current route and expect to returns an object `{}` |
+| minify            | `Boolean`  | `false`  | Compile a minify version of HTML                                                         |
+
 #### Common Page Generate
 
 These simple pages structure will generate basically the same pages in output path:
@@ -110,7 +120,7 @@ The Multipages Plugin will request the correspondent **data** file from the inte
 in there you can require it and return, then, the plugin will throughout the array of datas
 and generate all `@product` pages, see below the result and then an example of **data** file.
 
-> Look the `@` at the beginning in product folder, that's necessary to MultiPages create the routes and generate final folders
+:red_circle: Look the `@` at the beginning in product folder, that's necessary to MultiPages create the routes and generate final folders
 
 ```
 dist
