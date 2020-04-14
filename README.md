@@ -66,9 +66,9 @@ module.exports = (argv, mode) => ({
 
 #### Template Engine Extensions Interface
 
-| Name                           | package                         | Status           |
-| ------------------------------ | ------------------------------- | ---------------- |
-| multipages-extension-interface | @multipages/extension-interface | Build Pass Bagde |
+| Name                | package                         | Status           |
+| ------------------- | ------------------------------- | ---------------- |
+| extension-interface | @multipages/extension-interface | Build Pass Bagde |
 
 #### Template Engine Extensions
 
@@ -81,13 +81,13 @@ module.exports = (argv, mode) => ({
 
 #### Options
 
-| Name              | Type                               | Default  | Description                                                                         |
-| ----------------- | ---------------------------------- | -------- | ----------------------------------------------------------------------------------- |
-| rootTemplatePath  | `String`                           | './src'  | Where all yours includes, partials, components, pages live                          |
-| pagesTemplatePath | `String`                           | './src'  | Where all your structured pages live                                                |
-| templateEngine    | `TemplateEngineExtension instance` | `Object` | Inform which template engine exntension you prefer use                              |
-| data              | `Function`                         | `Object` | The `data` function receives the current route and expects to return an object `{}` |
-| minify            | `Boolean`                          | `false`  | Compile a minify version of HTML                                                    |
+| Name              | Type                      | Default  | Description                                                                         |
+| ----------------- | ------------------------- | -------- | ----------------------------------------------------------------------------------- |
+| rootTemplatePath  | `String`                  | './src'  | Where all yours includes, partials, components, pages live                          |
+| pagesTemplatePath | `String`                  | './src'  | Where all your structured pages live                                                |
+| templateEngine    | `TemplateEngineExtension` | `Object` | Inform which template engine exntension you prefer use                              |
+| data              | `Function`                | `Object` | The `data` function receives the current route and expects to return an object `{}` |
+| minify            | `Boolean`                 | `false`  | Compile a minify version of HTML                                                    |
 
 #### Common Page Generate
 
