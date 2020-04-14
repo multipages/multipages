@@ -127,9 +127,33 @@ module.exports = {
 #### Intermediate Page Generate
 
 Now you will beginning to realize how multipages works, here we need a certain structure within **data** file to generate all pages on the `@product` template,
-first we have to exports an vector (`Array`) and append all pages objects, each of these object will be a new structure called `params`, let's see below:
+first we have to exports an vector (`Array`) and append all pages objects, each of these object will be a new structure called `params`.
+
+When multipages require the respective data object it will inform the route `/products/@product` for the user to facilitate the retrieval of the data file.
+
+Plugin Interface Example
 
 ```javascript
+/**
+ * just a piece of code to explain data request
+*/
+
+new MultiPagesPlugin({
+  data({ route }) {
+    return require(`./src/data${route}`);
+  }
+});
+```
+
+Example of Data
+
+```javascript
+/**
+ * This data file has a specific path to make easy your request
+ *
+ * path: ./src/data/products/@product
+*/
+
 module.exports = [
   {
     params: {
