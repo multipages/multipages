@@ -64,14 +64,30 @@ module.exports = (argv, mode) => ({
 };
 ```
 
+#### Template Engine Extensions Interface
+
+| Name                           | package                         | Status           |
+| ------------------------------ | ------------------------------- | ---------------- |
+| multipages-extension-interface | @multipages/extension-interface | Build Pass Bagde |
+
+#### Template Engine Extensions
+
+| Name       | package                          | Status           |
+| ---------- | -------------------------------- | ---------------- |
+| nunjucks   | @multipages/nunjucks-extension   | Build Pass Bagde |
+| pug        | @multipages/pug-extension        | Build Pass Bagde |
+| ejs        | @multipages/ejs-extension        | Build Pass Bagde |
+| handlebars | @multipages/handlebars-extension | Build Pass Bagde |
+
 #### Options
 
-| Name              | Type       | Default  | Description                                                                         |
-| ----------------- | ---------- | -------- | ----------------------------------------------------------------------------------- |
-| rootTemplatePath  | `String`   | './src'  | Where all yours includes, partials, components, pages live                          |
-| pagesTemplatePath | `String`   | './src'  | Where all your structured pages live                                                |
-| data              | `Function` | `Object` | The `data` function receives the current route and expects to return an object `{}` |
-| minify            | `Boolean`  | `false`  | Compile a minify version of HTML                                                    |
+| Name              | Type                               | Default  | Description                                                                         |
+| ----------------- | ---------------------------------- | -------- | ----------------------------------------------------------------------------------- |
+| rootTemplatePath  | `String`                           | './src'  | Where all yours includes, partials, components, pages live                          |
+| pagesTemplatePath | `String`                           | './src'  | Where all your structured pages live                                                |
+| templateEngine    | `TemplateEngineExtension instance` | `Object` | Inform which template engine exntension you prefer use                              |
+| data              | `Function`                         | `Object` | The `data` function receives the current route and expects to return an object `{}` |
+| minify            | `Boolean`                          | `false`  | Compile a minify version of HTML                                                    |
 
 #### Common Page Generate
 
@@ -196,7 +212,7 @@ templates
 
 The Multipages Plugin will request the correspondent **data** file from the interface of plugin, in there you can require it and return, then, the plugin will throughout the array of datas and will generate all `@product` pages, see below the result:
 
-:red_circle: _Look the `@` at the beginning in product folder, that's necessary to MultiPages create the routes and generate final folders_
+:heavy_exclamation_mark: _Look the `@` at the beginning in product folder, that's necessary to MultiPages create the routes and generate final folders_
 
 ```
 dist
