@@ -2,7 +2,7 @@
   <img src="logo.jpg" alt="Multipage" />
 </h1>
 
-> **Multipage is a static site generator** in form of webpack plugin that use your prefered template engine and generate multiple pages and subpages
+> **Multipage is a static site generator** in form of webpack plugin that use your favorite  template engine and generate multiple pages and subpages
 
 ## Highlights
 
@@ -108,7 +108,7 @@ templates
 
 The Multipage Plugin will request the correspondent **data** file from the interface of plugin,
 in there you can require it and return, then, the plugin will throughout the array of datas
-and generate all `@product` pages, see below the result and then a example of **data** file.
+and generate all `@product` pages, see below the result and then an example of **data** file.
 
 > Look the `@` at the beginning in product folder, that's necessary to MultiPage create the routes and generate final folders
 
