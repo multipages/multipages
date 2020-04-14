@@ -81,13 +81,13 @@ module.exports = (argv, mode) => ({
 
 #### Options
 
-| Name              | Type                      | Default  | Description                                                                         |
-| ----------------- | ------------------------- | -------- | ----------------------------------------------------------------------------------- |
-| rootTemplatePath  | `String`                  | './src'  | Where all yours includes, partials, components, pages live                          |
-| pagesTemplatePath | `String`                  | './src'  | Where all your structured pages live                                                |
-| templateEngine    | `TemplateEngineExtension` | `Object` | Inform which template engine exntension you prefer use                              |
-| data              | `Function`                | `Object` | The `data` function receives the current route and expects to return an object `{}` |
-| minify            | `Boolean`                 | `false`  | Compile a minify version of HTML                                                    |
+| Name              | Type                      | Default                  | Description                                                                         |
+| ----------------- | ------------------------- | ------------------------ | ----------------------------------------------------------------------------------- |
+| rootTemplatePath  | `String`                  | './src/templates'        | Where all yours includes, partials, components, pages live                          |
+| pagesTemplatePath | `String`                  | './src/temaplates/pages' | Where all your structured pages live                                                |
+| templateEngine    | `TemplateEngineExtension` | `Object`                 | Inform which template engine extension you prefer use                               |
+| data              | `Function`                | `Object`                 | The `data` function receives the current route and expects to return an object `{}` |
+| minify            | `Boolean`                 | `false`                  | Compile a minify version of HTML                                                    |
 
 #### Common Page Generate
 
