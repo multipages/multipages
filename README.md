@@ -66,12 +66,12 @@ module.exports = (argv, mode) => ({
 
 #### Options
 
-| Name              | Type       | Default  | Description                                                                              |
-| ----------------- | ---------- | -------- | ---------------------------------------------------------------------------------------- |
-| rootTemplatePath  | `String`   | './src'  | Where all yours includes, partials, components, pages live                               |
-| pagesTemplatePath | `String`   | './src'  | Where all your structure pages live                                                      |
-| data              | `Function` | `Object` | The `data` function thats receive the current route and expect to returns an object `{}` |
-| minify            | `Boolean`  | `false`  | Compile a minify version of HTML                                                         |
+| Name              | Type       | Default  | Description                                                                         |
+| ----------------- | ---------- | -------- | ----------------------------------------------------------------------------------- |
+| rootTemplatePath  | `String`   | './src'  | Where all yours includes, partials, components, pages live                          |
+| pagesTemplatePath | `String`   | './src'  | Where all your structured pages live                                                |
+| data              | `Function` | `Object` | The `data` function receives the current route and expects to return an object `{}` |
+| minify            | `Boolean`  | `false`  | Compile a minify version of HTML                                                    |
 
 #### Common Page Generate
 
@@ -102,9 +102,63 @@ dist
     `-- index.html
 ```
 
+You can return a specific **data** file per route, because at the definition of options on multipages plugin, you define data function, thats receive each processed route
+and expects a correspondent `data object`, see below a simple **data** file structure;
+
+```javascript
+/**
+ * Example of path pages
+ *
+ * home(index): ./src/data/index.js
+ * contact: ./src/data/contact/index.js
+*/
+
+module.exports = {
+  data: {
+    title: 'Contact Page',
+    description: 'Please feel free to contact me',
+    tracking: {
+      UA: 'XXXXX'
+    }
+  }
+};
+```
+
 #### Intermediate Page Generate
 
-Now we are looking for generate multiple `product` pages based on Array from correspondent **data** file
+Now you will beginning to realize how multipages works, here we need a certain structure within **data** file to generate all pages on the `@product` template,
+first we have to exports an vector (`Array`) and append all pages objects, each of these object will be a new structure called `params`, let's see below:
+
+```javascript
+module.exports = [
+  {
+    params: {
+      "@product": "smartphone"
+    },
+    data: {
+      title: 'Smartphone Page'
+    }
+  },
+  {
+    params: {
+      "@product": "calculator"
+    },
+    data: {
+      title: 'Calculator Page'
+    }
+  },
+  {
+    params: {
+      "@product": "computer"
+    },
+    data: {
+      title: 'Computer Page'
+    }
+  },
+];
+```
+
+Now we are looking for generate multiple `@product` pages based on a vector (`Array`) from correspondent **data** file
 
 ```
 templates
@@ -116,11 +170,9 @@ templates
         `-- index.njk
 ```
 
-The Multipages Plugin will request the correspondent **data** file from the interface of plugin,
-in there you can require it and return, then, the plugin will throughout the array of datas
-and generate all `@product` pages, see below the result and then an example of **data** file.
+The Multipages Plugin will request the correspondent **data** file from the interface of plugin, in there you can require it and return, then, the plugin will throughout the array of datas and will generate all `@product` pages, see below the result:
 
-:red_circle: Look the `@` at the beginning in product folder, that's necessary to MultiPages create the routes and generate final folders
+:red_circle: _Look the `@` at the beginning in product folder, that's necessary to MultiPages create the routes and generate final folders_
 
 ```
 dist
@@ -129,8 +181,8 @@ dist
     |-- smartphone
     |   `-- index.html
     |-- calculator
-    |   `-- index.njk
+    |   `-- index.html
     |-- computer
-    |   `-- index.njk
+    |   `-- index.html
     `-- index.html
 ```
