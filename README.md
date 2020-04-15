@@ -2,7 +2,7 @@
   <img src="logo.jpg" alt="Multipages" />
 </h1>
 
-> **Multipages is a static site generator** in form of webpack plugin that use your favorite  template engine and generate multiple pages and subpages
+> **Multipages is a static site generator** in form of webpack plugin that use your favorite  template engine and generate multiple pages and subpages - :construction: Project Under Construction :construction:
 
 ## Highlights
 
@@ -64,7 +64,7 @@ module.exports = (argv, mode) => ({
 };
 ```
 
-#### Template Engine Extensions
+#### Packages
 
 | Name       | package                          | Status           |
 | ---------- | -------------------------------- | ---------------- |

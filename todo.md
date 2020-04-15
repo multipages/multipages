@@ -4,6 +4,10 @@
 
 ## Referências
 
+### package
+
+https://github.com/flexdinesh/npm-module-boilerplate
+
 ### Webpack
 
 https://webpack.js.org/api/compiler-hooks/#done
