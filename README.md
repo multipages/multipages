@@ -4,7 +4,7 @@
 
 > **MultiPages is a static site generator** in the form of webpack plugin that uses your favorite template engine and generates multiple pages and subpages - :construction: Project Under Construction :construction:
 
-## Highlights
+# Highlights
 
 - :tada: Easy to generate **static sites**
 - :electric_plug: Use your favorite **Template Engine**
@@ -12,7 +12,7 @@
 - :microscope: You can **minify** the HTML output
 - :fire: You can add **custom assets** to the template
 
-## Basic Usage
+# Basic Usage
 
 #### Install
 
@@ -225,7 +225,7 @@ dist
 ```
 ## Advanced Page Generate
 
-Here we are look for a more complex route, a example with 3 levels:
+Let's see a more complex route, this time with 3 levels:
 
 _Example source pages structure_
 
