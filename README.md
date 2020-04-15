@@ -6,11 +6,11 @@
 
 ## Highlights
 
-- :tada: Easy to generate static sites
-- :electric_plug: Use your Favorite Template Engine
-- :trophy: Each Page can have it own data file
-- :microscope: Your can minify the HTML output
-- :fire: You Can add custom assets to the template
+- :tada: Easy to generate **static sites**
+- :electric_plug: Use your favorite **Template Engine**
+- :trophy: Each page can have it own **data file**
+- :microscope: You can **minify** the HTML output
+- :fire: You can add **custom assets** to the template
 
 ## Basic Usage
 
@@ -84,7 +84,7 @@ module.exports = (argv, mode) => ({
 | data              | `Function`                | `Object`                | The `data` function receives the current route and expects to return an object `{}` |
 | minify            | `Boolean`                 | `false`                 | Compile a minify version of HTML                                                    |
 
-#### Common Page Generate
+## Common Page Generate
 
 These simple pages structure will generate basically the same pages in output path:
 
@@ -135,7 +135,7 @@ module.exports = {
 };
 ```
 
-#### Intermediate Page Generate
+## Intermediate Page Generate
 
 Now you will beginning to realize how multipages works, here we need a certain structure within **data** file to generate all pages on the `@product` template,
 first we have to exports an vector (`Array`) and append all pages objects, each of these object will be a new structure called `params`.
@@ -220,4 +220,86 @@ dist
     |-- computer
     |   `-- index.html
     `-- index.html
+```
+## Advanced Page Generate
+
+```
+templates
+`-- pages
+    |-- index.njk
+    `-- products
+        |-- @category
+        |   |-- @subcategory
+        |   |   |-- @productId
+        |   |   |   `-- index.njk
+        |   |   `-- index.njk
+        |   `-- index.njk
+        `-- index.njk
+```
+
+
+```javascript
+/**
+ * Level 1
+ * Route /products/@category
+ * Data ./src/data/products/@category/index.js
+*/
+
+module.exports = [
+  {
+
+  }
+]
+```
+
+```javascript
+/**
+ * Level 2
+ * Route /products/@category/@subcategory
+ * Data ./src/data/products/@category/@sub@category/index.js
+*/
+
+module.exports = [
+
+]
+```
+
+
+```javascript
+/**
+ * Level 3
+ * Route /products/@category/@subcategory/@productId
+ * Data ./src/data/products/@category/@sub@category/@productId/index.js
+*/
+
+module.exports = [
+
+]
+```
+
+```
+dist
+|-- index.html
+`-- products
+    |-- technology
+    |   |-- index.njk
+    |   `-- computer
+    |       |-- index.njk
+    |       |-- motherboard
+    |       |   `-- index.njk
+    |       `-- videoboard
+    |           `-- index.njk
+    |-- food
+    |   |-- index.njk
+    |   `-- italian
+    |       |-- index.njk
+    |       `-- pizza
+    |           `-- index.njk
+    |-- costume
+    |   |-- index.njk
+    |   `-- beach
+    |       |-- index.njk
+    |       `-- swimming-trunks
+    |           `-- index.njk
+    `-- index.njk
 ```
