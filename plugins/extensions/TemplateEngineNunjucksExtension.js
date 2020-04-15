@@ -1,6 +1,6 @@
 const nunjucks = require('nunjucks');
 
-class TemplateEngineNunjucksExtension {
+module.exports = class TemplateEngineNunjucksExtension {
   constructor(options) {
     this.options = {
       filters: [],
@@ -33,4 +33,3 @@ class TemplateEngineNunjucksExtension {
     return this.engine.render(filename, data);
   }
 }
-module.exports = TemplateEngineNunjucksExtension;

@@ -2,7 +2,7 @@
   <img src="logo.jpg" alt="Multipages" />
 </h1>
 
-> **Multipages is a static site generator** in form of webpack plugin that use your favorite  template engine and generate multiple pages and subpages - :construction: Project Under Construction :construction:
+> **MultiPages is a static site generator** in the form of webpack plugin that uses your favorite template engine and generates multiple pages and subpages - :construction: Project Under Construction :construction:
 
 ## Highlights
 
@@ -22,7 +22,7 @@
 
 #### Setup
 
-Add the MultiPages plugin into the webpack plugins array within `webpack.config.js` file
+Add the MultiPages Plugin into the webpack plugins array within `webpack.config.js` file.
 
 ```javascript
 const MultiPagesPlugin = require('@multipages/plugin');
@@ -86,7 +86,7 @@ module.exports = (argv, mode) => ({
 
 ## Common Page Generate
 
-These simple pages structure will generate basically the same pages in output path:
+This simple pages structure will generate the same pages in the output path:
 
 ```
 templates
@@ -100,7 +100,7 @@ templates
         `-- index.njk
 ```
 
-See below the output pages:
+Look the output pages below:
 
 ```
 dist
@@ -113,15 +113,16 @@ dist
     `-- index.html
 ```
 
-You can return a specific **data** file per route, because at the definition of options on multipages plugin, you define data function, thats receive each processed route
-and expects a correspondent `data object`, see below a simple **data** file structure:
+You can return a specific **data file** per route. The MultiPages Plugin expects a **data function** that receives each processed route, then, expects to return a correspondent **data object**. Let's see an example below:
 
 ```javascript
 /**
  * Example of path pages
  *
- * home(index): ./src/data/index.js
- * contact: ./src/data/contact/index.js
+ * Route    | Path                         |
+ * ---------|------------------------------|
+ * /        | ./src/data/index.js          |
+ * /contact | ./src/data/contact/index.js  |
 */
 
 module.exports = {
@@ -135,14 +136,7 @@ module.exports = {
 };
 ```
 
-## Intermediate Page Generate
-
-Now you will beginning to realize how multipages works, here we need a certain structure within **data** file to generate all pages on the `@product` template,
-first we have to exports an vector (`Array`) and append all pages objects, each of these object will be a new structure called `params`.
-
-When multipages require the respective data object it will inform the route `/products/@product` for the user to facilitate the retrieval of the data file.
-
-**Plugin Interface Example**
+_Example plugin interface:_
 
 ```javascript
 /**
@@ -156,7 +150,16 @@ new MultiPagesPlugin({
 });
 ```
 
-**Example of Data**
+## Intermediate Page Generate
+
+Let's move forward and be more complex, here we gonna generate multiple `product` pages.
+
+Now our data file has to exports a list of objects, each object must have 2 properties, the `params` and `data`.
+
+We need to assign the corresponding value to the params, so, MultiPages can generate all folders correctly.
+
+
+_Example data file:_
 
 ```javascript
 /**
@@ -193,7 +196,9 @@ module.exports = [
 ];
 ```
 
-Now we are looking for generate multiple `@product` pages based on a vector (`Array`) from correspondent **data** file
+The pages structure must be different too, to informs MultiPage that `product` template will be replicated through the data list (from data file), we need to prefix the `product` folder with "@" character, like this: `@product`.
+
+_Example source pages structure_
 
 ```
 templates
@@ -204,10 +209,7 @@ templates
         |   `-- index.njk
         `-- index.njk
 ```
-
-The Multipages Plugin will request the correspondent **data** file from the interface of plugin, in there you can require it and return, then, the plugin will throughout the array of datas and will generate all `@product` pages, see below the result:
-
-:heavy_exclamation_mark: _Look the `@` at the beginning in product folder, that's necessary to MultiPages create the routes and generate final folders_
+_Example output pages structure:_
 
 ```
 dist
@@ -223,6 +225,10 @@ dist
 ```
 ## Advanced Page Generate
 
+Here we are look for a more complex route, a example with 3 levels:
+
+_Example source pages structure_
+
 ```
 templates
 `-- pages
@@ -237,69 +243,160 @@ templates
         `-- index.njk
 ```
 
+_Example data file level 1:_
 
 ```javascript
 /**
  * Level 1
- * Route /products/@category
- * Data ./src/data/products/@category/index.js
+ * Route  |  /products/@category
+ * Data   |  ./src/data/products/@category/index.js
 */
 
 module.exports = [
   {
-
+    params: {
+      "@category": "technology"
+    },
+    data: {
+      title: "technology"
+    }
+  },
+  {
+    params: {
+      "@category": "food"
+    },
+    data: {
+      title: "food"
+    }
+  },
+  {
+    params: {
+      "@category": "costume"
+    },
+    data: {
+      title: "costume"
+    }
   }
 ]
 ```
+_Example data file level 2:_
 
 ```javascript
 /**
  * Level 2
- * Route /products/@category/@subcategory
- * Data ./src/data/products/@category/@sub@category/index.js
+ * Route  |  /products/@category/@subcategory
+ * Data   |  ./src/data/products/@category/@subcategory/index.js
 */
 
 module.exports = [
-
+  {
+    params: {
+      "@category": "technology",
+      "@subcategory": "computer",
+    },
+    data: {
+      title: "technology - computer"
+    }
+  },
+  {
+    params: {
+      "@category": "food"
+      "@subcategory": "italian",
+    },
+    data: {
+      title: "food - italian"
+    }
+  },
+  {
+    params: {
+      "@category": "costume"
+      "@subcategory": "beach",
+    },
+    data: {
+      title: "costume - beach"
+    }
+  }
 ]
 ```
 
+_Example data file level 3:_
 
 ```javascript
 /**
  * Level 3
- * Route /products/@category/@subcategory/@productId
- * Data ./src/data/products/@category/@sub@category/@productId/index.js
+ * Route  |  /products/@category/@subcategory/@productId
+ * Data   |  ./src/data/products/@category/@subcategory/@productId/index.js
 */
 
 module.exports = [
-
+  {
+    params: {
+      "@category": "technology",
+      "@subcategory": "computer",
+      "@productId": "motherboard",
+    },
+    data: {
+      title: "technology - computer - motherboard"
+    }
+  },
+  {
+    params: {
+      "@category": "technology",
+      "@subcategory": "computer",
+      "@productId": "videoboard",
+    },
+    data: {
+      title: "technology - computer - videoboard"
+    }
+  },
+  {
+    params: {
+      "@category": "food"
+      "@subcategory": "italian",
+      "@productId": "videoboard",
+    },
+    data: {
+      title: "food - italian - videoboard"
+    }
+  },
+  {
+    params: {
+      "@category": "costume"
+      "@subcategory": "beach",
+      "@productId": "swimming-trunks",
+    },
+    data: {
+      title: "costume - beach - swimming-trunks"
+    }
+  }
 ]
 ```
+
+_Example output pages structure:_
 
 ```
 dist
 |-- index.html
 `-- products
     |-- technology
-    |   |-- index.njk
+    |   |-- index.html
     |   `-- computer
-    |       |-- index.njk
+    |       |-- index.html
     |       |-- motherboard
-    |       |   `-- index.njk
+    |       |   `-- index.html
     |       `-- videoboard
-    |           `-- index.njk
+    |           `-- index.html
     |-- food
-    |   |-- index.njk
+    |   |-- index.html
     |   `-- italian
-    |       |-- index.njk
+    |       |-- index.html
     |       `-- pizza
-    |           `-- index.njk
+    |           `-- index.html
     |-- costume
-    |   |-- index.njk
+    |   |-- index.html
     |   `-- beach
-    |       |-- index.njk
+    |       |-- index.html
     |       `-- swimming-trunks
-    |           `-- index.njk
-    `-- index.njk
+    |           `-- index.html
+    `-- index.html
 ```
