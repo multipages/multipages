@@ -414,3 +414,9 @@ dist
     </tr>
   <tbody>
 </table>
+
+# Contributors
+
+This project exists thanks to all the people who contribute.
+
+You're free to contribute to this project by submitting [issues](https://github.com/multipages/multipages/issues) and/or [pull requests](https://github.com/multipages/multipages/pulls). This project is test-driven, so keep in mind that every change and new feature should be covered by tests.
