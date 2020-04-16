@@ -409,6 +409,33 @@ dist
     |           `-- index.html
     `-- index.html
 ```
+
+## Assets
+
+As MultiPage works together with the webpack, it gets access to the `assets` that have been processed through an object called assets within data object that the templates have access.
+
+_Example use the assets:_
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Example MultiPage Template</title>
+
+  <!-- Here we add a link to style-->
+  <link href="{{ assets.css }}" type="text/css">
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <!-- Here we add a script -->
+    <script src="{{ assets.js }}"></script>
+  </body>
+</html>
+```
+
 # Maintainers
 
 <table>
