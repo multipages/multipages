@@ -462,3 +462,4 @@ This repository uses [standard style guide](https://github.com/standard/standard
 # License
 
 MIT © Daniel Simão da Silva
+
