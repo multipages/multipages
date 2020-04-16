@@ -1,7 +1,18 @@
-*CHANGELOG* :memo:
-* adding some validations to contact form;
-* adding Validate to the project;
-* creating module to wrap Validate;
+# Changelog (or Bugfix)
 
-*References* :book:
-* [Adding validations to contact form](https://trello.com/abcdef)
+- Change 1
+- Change 2
+
+# Addicional Information
+
+- any additional information
+
+# Checklist
+
+[] Tests
+[] Translations
+[] Documentation
+
+# References
+
+- Some card trello or jira ID, or something else.
