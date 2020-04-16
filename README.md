@@ -8,6 +8,7 @@
   <!-- <a href="https://www.npmjs.com/package/standard"><img src="https://img.shields.io/npm/v/standard.svg" alt="npm version"></a> -->
   <!-- <a href="https://www.npmjs.com/package/eslint-config-standard"><img src="https://img.shields.io/npm/dm/eslint-config-standard.svg" alt="npm downloads"></a> -->
   <a href="https://standardjs.com"><img src="https://img.shields.io/badge/code_style-standard-brightgreen.svg" alt="Standard - JavaScript Style Guide"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="licenses - MIT"></a>
 </p>
 
 > **MultiPages is a static site generator** in the form of webpack plugin that uses your favorite template engine and generates multiple pages and subpages - :construction: Project Under Construction :construction:
@@ -430,3 +431,7 @@ This project exists thanks to all the people who contribute.
 You're free to contribute to this project by submitting [issues](https://github.com/multipages/multipages/issues) and/or [pull requests](https://github.com/multipages/multipages/pulls). This project is test-driven, so keep in mind that every change and new feature should be covered by tests.
 
 This repository uses [standard style guide](https://github.com/standard/standard)
+
+# License
+
+MIT © Daniel Simão da Silva
