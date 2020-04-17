@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% block meta %}
+    {% include "includes/meta.njk" %}
+  {% endblock %}
+  <base href="/">
+  <link rel="stylesheet" href="{{ assets.css }}">
+  <title>{{ title }}</title>
+</head>
+<body>
+  {% block header %}
+    {% include "components/header.njk" %}
+  {% endblock %}
+
+  {% block content %}
+    <main>Content</main>
+  {% endblock %}
+
+  {% block footer %}
+    {% include "components/footer.njk" %}
+  {% endblock %}
+
+  <script src="{{ assets.js }}"></script>
+</body>
+</html>
