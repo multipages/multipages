@@ -1,41 +1,45 @@
 const fs = require('fs');
 const path = require('path');
+const EventEmitter = require('events');
 
 const shell = require('shelljs');
-const { minify: minifier } = require('html-minifier-terser');
 
-const { sortPagePath } = require('./core');
-const { createFile, createDir, removeFile } = require('./utils');
+const defaultSettings = {
+  rootPath: path.resolve(process.cwd(), './src/templates'),
+  pagesPath: path.resolve(process.cwd(), './src/templates/pages'),
+  output: path.resolve(process.cwd(), './dist'),
+  async data() {},
+};
 
-const PLUGIN_NAME = 'MultiPagePlugin';
-
-class MultiPagePlugin {
-  constructor(options = {}) {
-    this.options = {
-      rootTemplatePath: './src',
-      pagesTemplatePath: './src',
-      templateEngine: function() {},
-      data: {},
-      ...options
+class Core {
+  constructor(settings, hooks) {
+    this.settings = {
+      ...defaultSettings,
+      ...settings,
+      rootPath: path.resolve(process.cwd(), settings.rootPath),
+      pagesPath: path.resolve(process.cwd(), settings.pagesPath),
     };
+
+    this.hooks = new EventEmitter();
+
+    this.hooks.on('filePathsCreated', () => {});
   }
 
-  apply(compiler) {
-    // Called after setting up initial set of internal plugins
-    compiler.hooks.afterPlugins.tap(PLUGIN_NAME, compiler => {
-      removeFile(compiler.outputPath);
-    });
-
-    // When compilation is done
-    compiler.hooks.done.tapAsync(PLUGIN_NAME, (stats, callback) => {
-      this.setup(stats);
-      this.start();
-
-      callback();
+  addSettings(options) {
+    Object.keys(options).forEach(option => {
+      if (option in defaultSettings) {
+        return this.settings[option] = options[option] || defaultSettings[option];
+      }
     });
   }
 
-  walkDir(dirPath) {
+  static clearPath(pathname) {
+    const resolvedPath = path.resolve(process.cwd(), pathname);
+    // if exists, remove it.
+    fs.existsSync(resolvedPath) && shell.rm('-rf', resolvedPath);
+  }
+
+  createFilePathList(targetPath, ext = /(\.html)$/) {
     const paths = [];
 
     const walk = (directory) => {
@@ -49,146 +53,94 @@ class MultiPagePlugin {
           return walk(filePath);
         }
 
-        if (this.templateEngine.reExtensions.test(path.extname(filePath))) {
-          const relativePath = filePath.replace(dirPath, '');
-          const splitedPath = relativePath.split('\\');
-
-          const [name] = splitedPath[splitedPath.length - 1].split(/\./);
-          const dirname = splitedPath.slice(0, splitedPath.length - 1).join('/');
-          const filename = relativePath.replace(/\\/g, '/');
-
-          return paths.push({
-            filename,
-            name,
-            dirname: dirname ? dirname : '/',
-            ext: path.extname(filePath)
-          });
-        }
+        ext.test(filePath) && paths.push(filePath);
       });
     };
 
-    walk(dirPath);
+    walk(targetPath
+      ? path.resolve(process.cwd(), targetPath)
+      : this.settings.pagesPath
+    );
+
+    this.hooks.emit('filePathsCreated', paths);
 
     return paths;
   }
 
-  extractAssets() {
-    const assetsData = this.compilation.getAssets();
-    const assets = {};
+  createRouterList(filePaths) {
+    const paths = filePaths || this.createFilePathList();
+    const routes = paths
+      .map(path => {
+        let route = path
+          // remove rootPath
+          .replace(this.settings.rootPath, '')
+          // change double back-slash to a single slash
+          .replace(/\\/g, '/');
 
-    assetsData.forEach(asset => {
-      const [, type] = asset.name.match(/\.(\w+)$/);
-      assets[type] = asset.name;
-    });
+        // remove filename and extension
+        route = route.split('/').slice(0, route.split('/').length - 1).join('/');
 
-    return assets;
+        // fix root and return route
+        return route ? route : '/';
+      })
+      .sort((routeA, routeB) => {
+        // To order routes from root to more complex
+        const a = routeA.split('/').length + routeA.length;
+        const b = routeB.split('/').length + routeB.length;
+
+        return (a > b) ? 1 : (a < b) && -1;
+      });
+
+    return routes;
   }
 
-  setup({ compilation }) {
-    this.compilation = compilation;
-    this.outputPath = compilation.outputOptions.path;
-    this.rootPagesRender = this.options.pagesTemplatePath.replace(`${this.options.rootTemplatePath}/`, '')
-    this.templateEngine = this.options.templateEngine.setup(path.resolve(process.cwd(), this.options.rootTemplatePath));
-
-    this.watchPages = this.walkDir(this.options.rootTemplatePath);
-    this.watchPages
-      .forEach(({ filename }) => compilation.fileDependencies.add(path.resolve(filename)));
+  dataHandler(route) {
+    return this.settings.data(route);
   }
 
-  resolveOutputPath(pathname) {
-    return path.resolve(`${this.outputPath}${pathname}`);
-  }
+  /**
+   * @method createPageList
+   * @description generate a list of info of all pages with data, route, page (final path)
+   * @param {Array} routeList
+   */
+  async createPageList(routeList) {
+    const routes = routeList || this.createRouterList();
 
-  resolveTemplateName(dirname, ext) {
-    return `${this.rootPagesRender}${dirname === '/' ? '' : dirname }/index${ext}`;
-  }
+    const pageInfo = (data, route, page) => ({ data, route, page });
 
-  getPages() {
-    const output = this.outputPath;
+    let pages = routes.map(async (route) => {
+      let dataFile;
 
-    const pages = this.fileListSorted.map(({ dirname, filename, ext }) => {
-      const pageData = this.options.data({ route: dirname });
-      const assets = this.extractAssets();
+      if (/(?=@)/g.test(route)) {
+        dataFile = await this.dataHandler(route);
 
-      if (Array.isArray(pageData)) {
-        return pageData.map(({ params, data }) => {
-          let template = filename;
-          let dirPath = dirname;
+        return dataFile.map(({ params, data }) => {
+          let pagename = route;
 
-          Object.keys(params).forEach(paramId => {
-            template = template.replace(paramId, params[paramId]);
-            dirPath = dirPath.replace(paramId, params[paramId]);
+          Object.keys(params).forEach((id) => {
+            pagename = pagename.replace(id, params[id]);
           });
 
-          return {
-            dirname: this.resolveOutputPath(dirPath),
-            filename: this.resolveOutputPath(template),
-            template: this.resolveTemplateName(dirname, ext),
-            data: {...data, assets },
-          };
+          return pageInfo(data, route, pagename);
         });
       }
 
-      return {
-        filename: this.resolveOutputPath(filename),
-        dirname: this.resolveOutputPath(dirname),
-        template: this.resolveTemplateName(dirname, ext),
-        data: { ...pageData.data, assets },
-      };
-    })
-
-    // to make a simple vector
-    return pages.flat(Infinity);
-  }
-
-  clearOutputPaths() {
-    if (this.outputPageCache) {
-      this.outputPageCache.forEach(({ dirname, filename }) => {
-        removeFile(dirname.replace(this.outputPath, '') === '' ? filename : dirname);
-      });
-    }
-
-    this.outputPageCache = [...this.pages];
-  }
-
-  start() {
-    this.fileList = this.walkDir(
-      path.resolve(process.cwd(), this.options.pagesTemplatePath)
-    );
-
-    this.fileListSorted = [...this.fileList].sort(sortPagePath);
-
-    this.pages = this.getPages();
-
-    this.clearOutputPaths();
-
-    this.pages.map(({ dirname, filename, template, data }) => {
-      let compiledTemplate = this.templateEngine.render(template, data);
-      let target = dirname.replace(this.outputPath, '') === '/' ? filename : dirname;
-
-      compiledTemplate = this.minify(compiledTemplate);
-
-      createDir(dirname);
-      createFile(filename.replace(this.templateEngine.reExtensions, '.html'), compiledTemplate);
+      return pageInfo(
+        await this.dataHandler(route),
+        route,
+        route
+      );
     });
-  }
 
-  minify(template) {
-    return this.options.minify
-      ? minifier(template, {
-          // https://www.npmjs.com/package/html-minifier-terser#options-quick-reference
-          collapseWhitespace: true,
-          keepClosingSlash: true,
-          removeComments: true,
-          removeRedundantAttributes: true,
-          removeScriptTypeAttributes: true,
-          removeStyleLinkTypeAttributes: true,
-          useShortDoctype: true
-        })
-      : template;
+    // // Resolve all promises
+    pages = await Promise.all(pages);
+
+    // // Flattening all pages
+    pages = pages.flat(Infinity);
+
+    return pages;
   }
 }
 
+module.exports = Core;
 
-
-module.exports = MultiPagePlugin;
