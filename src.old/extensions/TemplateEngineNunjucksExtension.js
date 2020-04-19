@@ -8,7 +8,7 @@ module.exports = class TemplateEngineNunjucksExtension {
       ...options
     };
 
-    this.reExtensions = /\.(njk|nunjucks|html)$/g;
+    this.ext = /\.(njk|nunjucks|html)$/;
   }
 
   setup(rootPath) {
@@ -29,7 +29,7 @@ module.exports = class TemplateEngineNunjucksExtension {
     this.engine.addExtension(...options);
   }
 
-  render(filename, data) {
-    return this.engine.render(filename, data);
+  compile(template, data) {
+    return this.engine.render(template, data);
   }
 }

@@ -3,11 +3,13 @@ const path = require('path');
 const EventEmitter = require('events');
 
 const shell = require('shelljs');
+const { JSDOM: Parse } = require('jsdom');
 
 const defaultSettings = {
-  rootPath: path.resolve(process.cwd(), './src/templates'),
-  pagesPath: path.resolve(process.cwd(), './src/templates/pages'),
-  output: path.resolve(process.cwd(), './dist'),
+  rootPath: './src/templates',
+  pagesPath: './src/templates/pages',
+  output: './dist',
+  engine: null,
   async data() {},
 };
 
@@ -16,27 +18,48 @@ class Core {
     this.settings = {
       ...defaultSettings,
       ...settings,
-      rootPath: path.resolve(process.cwd(), settings.rootPath),
-      pagesPath: path.resolve(process.cwd(), settings.pagesPath),
+      rootPath: path.resolve(process.cwd(), settings.rootPath || defaultSettings.rootPath),
+      pagesPath: path.resolve(process.cwd(), settings.pagesPath || defaultSettings.pagesPath),
+      output: path.resolve(process.cwd(), settings.output || defaultSettings.output),
     };
 
-    this.hooks = new EventEmitter();
+    this.hooks = hooks || new EventEmitter();
 
     this.hooks.on('filePathsCreated', () => {});
+    this.hooks.on('errors', () => {});
+
+    if (!this.settings.engine) {
+      return this.hooks.emit('errors', new Error('Please attach a template engine extension at MultiPagePlugin!'));
+    }
+
+    this.engine = this.settings.engine.setup(this.settings.rootPath);
   }
 
   addSettings(options) {
+    const isPath = (target) => ['rootPath', 'pagesPath', 'output'].includes(target);
+
     Object.keys(options).forEach(option => {
       if (option in defaultSettings) {
-        return this.settings[option] = options[option] || defaultSettings[option];
+        this.settings[option] = options[option] || defaultSettings[option];
+
+        if (isPath(option)) {
+          this.settings[option] = path.resolve(process.cwd(), this.settings[option]);
+        }
       }
     });
+
+    return this.settings;
   }
 
   static clearPath(pathname) {
     const resolvedPath = path.resolve(process.cwd(), pathname);
-    // if exists, remove it.
-    fs.existsSync(resolvedPath) && shell.rm('-rf', resolvedPath);
+
+    if(fs.existsSync(resolvedPath)) {
+      shell.rm('-rf', resolvedPath);
+      return true;
+    }
+
+    return false;
   }
 
   createFilePathList(targetPath, ext = /(\.html)$/) {
@@ -69,7 +92,7 @@ class Core {
 
   createRouterList(filePaths) {
     const paths = filePaths || this.createFilePathList();
-    const routes = paths
+    const routerList = paths
       .map(path => {
         let route = path
           // remove rootPath
@@ -77,21 +100,26 @@ class Core {
           // change double back-slash to a single slash
           .replace(/\\/g, '/');
 
-        // remove filename and extension
-        route = route.split('/').slice(0, route.split('/').length - 1).join('/');
+        let routeSplit = route.split('/');
 
-        // fix root and return route
-        return route ? route : '/';
+        // remove filename and extension
+        route = routeSplit.slice(0, routeSplit.length - 1).join('/');
+
+        // fix root and return route and file
+        return {
+          route: (route) ? route : '/',
+          file: routeSplit[routeSplit.length - 1]
+        };
       })
       .sort((routeA, routeB) => {
         // To order routes from root to more complex
-        const a = routeA.split('/').length + routeA.length;
-        const b = routeB.split('/').length + routeB.length;
+        const a = routeA.route.split('/').length + routeA.route.length;
+        const b = routeB.route.split('/').length + routeB.route.length;
 
         return (a > b) ? 1 : (a < b) && -1;
       });
 
-    return routes;
+    return routerList;
   }
 
   dataHandler(route) {
@@ -103,12 +131,13 @@ class Core {
    * @description generate a list of info of all pages with data, route, page (final path)
    * @param {Array} routeList
    */
-  async createPageList(routeList) {
-    const routes = routeList || this.createRouterList();
+  async createPageList(routerList) {
+    const router = routerList || this.createRouterList();
 
-    const pageInfo = (data, route, page) => ({ data, route, page });
+    const pageInfo = (data, route, page, file) => ({ data, route, page, file });
 
-    let pages = routes.map(async (route) => {
+    let pages = router.map(async ({ route, file }) => {
+
       let dataFile;
 
       if (/(?=@)/g.test(route)) {
@@ -121,24 +150,80 @@ class Core {
             pagename = pagename.replace(id, params[id]);
           });
 
-          return pageInfo(data, route, pagename);
+          return pageInfo(data, route, pagename, file);
         });
       }
 
-      return pageInfo(
-        await this.dataHandler(route),
-        route,
-        route
-      );
+      let { data } = await this.dataHandler(route);
+
+      return pageInfo(data, route, route, file);
     });
 
     // // Resolve all promises
-    pages = await Promise.all(pages);
+    try {
+      pages = await Promise.all(pages)
+    } catch(err) {
+      console.log(err.message);
+    }
 
     // // Flattening all pages
     pages = pages.flat(Infinity);
 
     return pages;
+  }
+
+  executeMiddleWares(context) {
+    const middlewares = this.settings.middlewares || [];
+
+    let length = middlewares.length;
+    let counter = 0;
+
+    function next() {
+      if (counter < middlewares.length) {
+         return middlewares[counter++](context, next);
+      }
+
+      return context;
+    }
+
+    return next();
+  }
+
+  async run() {
+    const filePathList = this.createFilePathList(this.settings.pagesPath, this.engine.ext);
+    const routerList = this.createRouterList(filePathList);
+    const pages = await this.createPageList(routerList);
+
+    return pages.map(({ data, route, page, file }) => {
+
+      const template = this.createTemplatePath(route, file);
+      const compiled = this.engine.compile(template, data);
+
+      // parse html
+      const parsedDOM = new Parse(compiled);
+
+      // run middleware
+      const context = this.executeMiddleWares({
+        parsedDOM,
+        data
+      });
+
+      // serialized processed html
+      const serialized = context.parsedDOM.serialize();
+
+      console.log(serialized);
+
+      // render serialized
+      // this.render(serialized, page);
+    })
+  }
+
+  createTemplatePath(route, file) {
+    return path.resolve(`${this.settings.pagesPath}${path.normalize(`${route}/${file}`)}`);
+  }
+
+  render(htmlString, page) {
+    return path.resolve(this.settings.output, page, 'index.html');
   }
 }
 
