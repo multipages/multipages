@@ -154,4 +154,4 @@ class MultiPagePlugin {
 
 
 
-module.exports =
+module.exports = MultiPagePlugin;
