@@ -10,6 +10,7 @@ const defaultSettings = {
   pagesPath: './src/templates/pages',
   output: './dist',
   engine: null,
+  paramSymbol: '@',
   async data() {},
 };
 
@@ -33,6 +34,19 @@ class Core {
     }
 
     this.engine = this.settings.engine.setup(this.settings.rootPath);
+
+    this.paramPattern = new RegExp(`(?=${this.settings.paramSymbol})`, 'g');
+  }
+
+  static clearPath(pathname) {
+    const resolvedPath = path.resolve(process.cwd(), pathname);
+
+    if(fs.existsSync(resolvedPath)) {
+      shell.rm('-rf', resolvedPath);
+      return true;
+    }
+
+    return false;
   }
 
   addSettings(options) {
@@ -49,17 +63,6 @@ class Core {
     });
 
     return this.settings;
-  }
-
-  static clearPath(pathname) {
-    const resolvedPath = path.resolve(process.cwd(), pathname);
-
-    if(fs.existsSync(resolvedPath)) {
-      shell.rm('-rf', resolvedPath);
-      return true;
-    }
-
-    return false;
   }
 
   createFilePathList(targetPath, ext = /(\.html)$/) {
@@ -140,7 +143,7 @@ class Core {
 
       let dataFile;
 
-      if (/(?=@)/g.test(route)) {
+      if (this.paramPattern.test(route)) {
         dataFile = await this.dataHandler(route);
 
         return dataFile.map(({ params, data }) => {
@@ -203,18 +206,13 @@ class Core {
       const parsedDOM = new Parse(compiled);
 
       // run middleware
-      const context = this.executeMiddleWares({
-        parsedDOM,
-        data
-      });
+      const context = this.executeMiddleWares({ parsedDOM, data });
 
       // serialized processed html
       const serialized = context.parsedDOM.serialize();
 
-      console.log(serialized);
-
       // render serialized
-      // this.render(serialized, page);
+      return this.render(serialized, page);
     })
   }
 
@@ -223,7 +221,21 @@ class Core {
   }
 
   render(htmlString, page) {
-    return path.resolve(this.settings.output, page, 'index.html');
+    const dirname = path.resolve(`${this.settings.output}${page}`);
+    const filename = path.resolve(dirname, 'index.html');
+
+    if (!fs.existsSync(dirname)) {
+      shell.mkdir('-p', dirname);
+    }
+
+    if (fs.existsSync(dirname)) {
+      fs.writeFileSync(filename, htmlString);
+    }
+
+    return {
+      dirname,
+      filename
+    };
   }
 }
 

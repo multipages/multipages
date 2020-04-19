@@ -17,26 +17,14 @@ const removeFile = (filename) => {
 const createDir = (dirname) => {
   const dirpath = path.resolve(dirname);
 
-  if (fs.existsSync(dirpath)) {
-    return false;
-  }
-
-  try {
+  if (!fs.existsSync(dirpath)) {
     shell.mkdir('-p', dirpath);
-
-    return true;
-  } catch(err) {
-    console.error(err);
   }
 };
 
 const createFile = (filename, htmlString ) => {
-  try {
+  if (!fs.existsSync(dirpath)) {
     fs.writeFileSync(filename, htmlString);
-
-    return true;
-  } catch(err) {
-    console.error(err);
   }
 };
 

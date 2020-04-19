@@ -1,9 +1,10 @@
+const MultiPagesExtensionInterface = require('@multipages/extension-interface');
 
 const PLUGIN_NAME = 'MultiPage';
 
 class WebpackPluginInterface {
   constructor(options) {
-    this.multipages = new MultiPages(options);
+    this.multipages = new MultiPagesCore(options);
   }
 
   apply(compiler) {
@@ -13,7 +14,6 @@ class WebpackPluginInterface {
 
     // When compilation is done
     compiler.hooks.done.tapAsync(PLUGIN_NAME, (stats, callback) => {
-
       this.multipages.hooks.on('filePathsCreated', filePaths => {
         compilation.fileDependencies.add(filePaths);
       });
