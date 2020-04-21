@@ -6,47 +6,47 @@ const webpack = require('webpack');
 
 const Core = require('../../src');
 
-const MultiPageNunjucksExtension =  require('../../src.old/extensions/TemplateEngineNunjucksExtension');
+const MultiPageNunjucksExtension = require('../../__fixtures__/extensions');
 
-describe('MultiPage Core', () => {
+describe('MultiPage:Core', () => {
   test('should create all html file paths from pagesPath', () => {
     const expected =  [
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\nunjucks-webpack-template-plugin\\__fixtures__\\findAllFilePaths\\contact\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\nunjucks-webpack-template-plugin\\__fixtures__\\findAllFilePaths\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\nunjucks-webpack-template-plugin\\__fixtures__\\findAllFilePaths\\products\\@category\\@subcategory\\@productId\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\nunjucks-webpack-template-plugin\\__fixtures__\\findAllFilePaths\\products\\@category\\@subcategory\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\nunjucks-webpack-template-plugin\\__fixtures__\\findAllFilePaths\\products\\@category\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\nunjucks-webpack-template-plugin\\__fixtures__\\findAllFilePaths\\products\\index.html'
+      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\contact\\index.html',
+      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\index.html',
+      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\products\\@category\\@subcategory\\@productId\\index.html',
+      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\products\\@category\\@subcategory\\index.html',
+      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\products\\@category\\index.html',
+      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\products\\index.html'
     ];
 
     const actualWithpagesPath = new Core({
-      rootPath: './__fixtures__/findAllFilePaths',
-      pagesPath: './__fixtures__/findAllFilePaths'
+      rootPath: './__fixtures__/source',
+      pagesPath: './__fixtures__/source'
     }).createFilePathList();
 
     expect(actualWithpagesPath).toEqual(expected);
 
     const actualWithParamPath = new Core({
-      rootPath: './__fixtures__/findAllFilePaths',
-      pagesPath: './__fixtures__/findAllFilePaths'
-    }).createFilePathList('./__fixtures__/findAllFilePaths');
+      rootPath: './__fixtures__/source',
+      pagesPath: './__fixtures__/source'
+    }).createFilePathList('./__fixtures__/source');
 
     expect(actualWithParamPath).toEqual(expected);
   });
 
   test('should trigger filePathsCreated hook', (done) => {
     const expected =  [
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\nunjucks-webpack-template-plugin\\__fixtures__\\findAllFilePaths\\contact\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\nunjucks-webpack-template-plugin\\__fixtures__\\findAllFilePaths\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\nunjucks-webpack-template-plugin\\__fixtures__\\findAllFilePaths\\products\\@category\\@subcategory\\@productId\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\nunjucks-webpack-template-plugin\\__fixtures__\\findAllFilePaths\\products\\@category\\@subcategory\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\nunjucks-webpack-template-plugin\\__fixtures__\\findAllFilePaths\\products\\@category\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\nunjucks-webpack-template-plugin\\__fixtures__\\findAllFilePaths\\products\\index.html'
+      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\contact\\index.html',
+      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\index.html',
+      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\products\\@category\\@subcategory\\@productId\\index.html',
+      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\products\\@category\\@subcategory\\index.html',
+      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\products\\@category\\index.html',
+      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\products\\index.html'
     ];
 
     const multipages = new Core({
-      rootPath: './__fixtures__/findAllFilePaths',
-      pagesPath: './__fixtures__/findAllFilePaths'
+      rootPath: './__fixtures__/source',
+      pagesPath: './__fixtures__/source'
     });
 
     let pages = [];
@@ -71,8 +71,8 @@ describe('MultiPage Core', () => {
     ];
 
     const routes = new Core({
-      rootPath: './__fixtures__/findAllFilePaths',
-      pagesPath: './__fixtures__/findAllFilePaths'
+      rootPath: './__fixtures__/source',
+      pagesPath: './__fixtures__/source'
     }).createRouterList();
 
     expect(routes.map(({route}) => route)).toEqual(expected);
@@ -92,8 +92,8 @@ describe('MultiPage Core', () => {
     ];
 
     new Core({
-      rootPath: './__fixtures__/findAllFilePaths',
-      pagesPath: './__fixtures__/findAllFilePaths',
+      rootPath: './__fixtures__/source',
+      pagesPath: './__fixtures__/source',
       async data(route) {
         return require(`../../__fixtures__/data${route}`);
       }
@@ -115,8 +115,8 @@ describe('MultiPage Core', () => {
     const productIdData = require('../../__fixtures__/data/products/@category/@subcategory/@productId');
 
     const multiPageCore = new Core({
-      rootPath: './__fixtures__/findAllFilePaths',
-      pagesPath: './__fixtures__/findAllFilePaths',
+      rootPath: './__fixtures__/source',
+      pagesPath: './__fixtures__/source',
       async data(route) {
         return require(`../../__fixtures__/data${route}`);
       }
@@ -136,63 +136,13 @@ describe('MultiPage Core', () => {
     })
   });
 
-  test('should static method clearPath remove a path directory or file', (done) => {
-    const filepath = path.resolve(process.cwd(), './__fixtures__/temp/folderToBeRemoved');
-
-    let expected;
-
-    if(!fs.existsSync(filepath)) {
-      shell.mkdir('-p', filepath);
-    }
-
-    setTimeout(() => {
-      Core.clearPath('./__fixtures__/temp/folderToBeRemoved');
-
-      if(!fs.existsSync(filepath)) {
-        expected = 'removed!';
-      }
-
-      expect('removed!').toBe(expected);
-      done()
-    }, 10);
-  });
-
-  test('should add settings after instantiate', () => {
-
-    const multiPageCore = new Core({
-      rootPath: './__fixtures__/findAllFilePaths',
-      pagesPath: './__fixtures__/findAllFilePaths'
-    });
-
-    const actual = multiPageCore.settings.output;
-    const expected = path.resolve(process.cwd(), './__fixtures__/temp');
-
-    multiPageCore.addSettings({
-      invalidOption: false
-    });
-
-    expect(multiPageCore.settings.invalidOption).toBe(undefined);
-
-    multiPageCore.addSettings({
-      output: ''
-    });
-
-    expect(multiPageCore.settings.output).toBe(actual);
-
-    multiPageCore.addSettings({
-      output: expected
-    });
-
-    expect(multiPageCore.settings.output).toBe(expected);
-  })
-
-  test('should generate output', (done) => {
-    Core.clearPath('./__fixtures__/temp');
+  test('should generate output pages', (done) => {
+    // Core.clearPath('./__fixtures__/dist');
 
     new Core({
-      rootPath: './__fixtures__/findAllFilePaths',
-      pagesPath: './__fixtures__/findAllFilePaths',
-      output: './__fixtures__/temp',
+      rootPath: './__fixtures__/source',
+      pagesPath: './__fixtures__/source',
+      output: './__fixtures__/dist',
       engine: new MultiPageNunjucksExtension(),
       async data(route) {
         return require(`../../__fixtures__/data${route}`);
