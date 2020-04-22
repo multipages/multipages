@@ -18,6 +18,15 @@ const defaultSettings = {
   async data() {},
 };
 
+const EVENTS = {
+  FILE_PATHS_CREATED: 'filePathsCreated',
+  ERROR: 'error'
+};
+
+const MESSAGES = {
+  NOT_ENGINE: 'Please attach a template engine extension at plugin!'
+};
+
 class Core {
   constructor({ settings, hooks }) {
     // Set Dependencies
@@ -29,17 +38,17 @@ class Core {
     };
 
     // Fix Paths
-    this.settings.rootPath = resolvePath(this.settings.rootPath)
-    this.settings.pagesPath = resolvePath(this.settings.pagesPath)
-    this.settings.output = resolvePath(this.settings.output)
+    this.settings.rootPath = resolvePath(this.settings.rootPath);
+    this.settings.pagesPath = resolvePath(this.settings.pagesPath);
+    this.settings.output = resolvePath(this.settings.output);
 
     // Define Hooks
-    this.hooks.on('filePathsCreated', () => {});
-    this.hooks.on('error', () => {});
+    this.hooks.on(EVENTS.FILE_PATHS_CREATED, () => {});
+    this.hooks.on(EVENTS.ERROR, () => {});
 
     // Verify engine
     if (!this.settings.engine) {
-      return this.hooks.emit('error', new Error('Please attach a template engine extension at MultiPagePlugin!'));
+      return this.hooks.emit('error', new Error(MESSAGES.NOT_ENGINE));
     }
 
     this.engine = this.settings.engine.setup(this.settings.rootPath);
@@ -225,5 +234,8 @@ class Core {
     return { dirname, filename };
   }
 }
+
+Core.EVENTS = EVENTS;
+Core.MESSAGES = MESSAGES;
 
 module.exports = Core;

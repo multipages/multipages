@@ -11,4 +11,7 @@ class CoreAdapter {
   }
 }
 
+CoreAdapter.EVENTS = Core.EVENTS;
+CoreAdapter.MESSAGES = Core.MESSAGES;
+
 module.exports = CoreAdapter;
