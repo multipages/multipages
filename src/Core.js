@@ -62,7 +62,9 @@ class Core {
     this.paramPattern = new RegExp(`(?=${this.settings.paramSymbol})`, 'g');
 
     // Set cache for rebuild
-    this.cache = new Set();
+    this.cache = {
+      output: new Set()
+    };
   }
 
   createFilePathList(targetPath, ext = /(\.html)$/) {
@@ -195,7 +197,7 @@ class Core {
   }
 
   clearOutput() {
-    Array.from(this.cache).forEach(template => removePath(template));
+    Array.from(this.cache.output).forEach(template => removePath(template));
   }
 
   createOutput() {
@@ -214,7 +216,7 @@ class Core {
       const template = resolvePath(`${this.settings.pagesPath}${normalize(`${route}/${file}`)}`);
       const compiled = this.engine.compile(template, data);
 
-      this.cache.add(template);
+      this.cache.output.add(template);
       // parse html
       const parsedDOM = new Parse(compiled);
 
