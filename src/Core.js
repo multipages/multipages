@@ -50,9 +50,6 @@ class Core {
     this.hooks.on(EVENTS.FILE_PATHS_CREATED, () => {});
     this.hooks.on(EVENTS.ERROR, () => {});
 
-    // Set parameter pattern regex
-    this.paramPattern = new RegExp(`(?:${this.settings.paramSymbol})`, 'g');
-
     // Set cache for rebuild
     this.cache = {
       output: new Set()
@@ -128,6 +125,22 @@ class Core {
     return this.settings.data(route);
   }
 
+  async routeHandler({ route, file }) {
+    const hasParam = this.createRoutePattern().test(route);
+    const dataSource = await this.dataHandler(route);
+    const dataSourceList = hasParam && Array.isArray(dataSource) ? dataSource : [dataSource];
+
+    return dataSourceList.map(source => this.dataSourceHandler(route, file, source));
+  }
+
+  dataSourceHandler(route, file, sourceItem) {
+    const sourceDefault = { params: {}, data: {} };
+    const { params, data } = Object.assign({}, sourceDefault, sourceItem);
+    const page = this.createPathByParams(route, params);
+
+    return { data, route, page, file };
+  }
+
   createPathByParams(route, params) {
     let pagename = route;
 
@@ -135,6 +148,7 @@ class Core {
 
     return pagename;
   }
+
 
   /**
    * @method createPageList
@@ -144,28 +158,7 @@ class Core {
   async createPageList(routerList) {
     const router = routerList || this.createRouterList();
 
-    let pages = router.map(async ({ route, file }) => {
-      const hasParam = this.createRoutePattern().test(route);
-      const dataSource = await this.dataHandler(route);
-      const dataSourceList = hasParam && Array.isArray(dataSource) ? dataSource : [dataSource];
-
-      const sourceDefault = {
-        params: {},
-        data: {}
-      };
-
-      return dataSourceList.map(sourceItem => {
-        const { params, data } = Object.assign({}, sourceDefault, sourceItem);
-        const pagename = this.createPathByParams(route, params);
-
-        return {
-          data: data,
-          route: route,
-          page: pagename,
-          file: file
-        };
-      });
-    });
+    let pages = router.map(options => this.routeHandler(options));
 
     // Resolve all promises
     pages = await Promise.all(pages)
@@ -204,22 +197,24 @@ class Core {
 
     this.clearOutput();
 
-    return pages.map(({ data, route, page, file }) => {
-      const template = resolvePath(`${this.settings.pagesPath}${normalize(`${route}/${file}`)}`);
-      const compiled = this.engine.compile(template, data);
+    return pages.map((options) => this.handlePage(options));
+  }
 
-      // parse html
-      const parsedDOM = new Parse(compiled);
+  handlePage({ data, route, page, file }) {
+    const template = resolvePath(`${this.settings.pagesPath}${normalize(`${route}/${file}`)}`);
+    const compiled = this.engine.compile(template, data);
 
-      // run middleware
-      const context = this.executeMiddleWares({ parsedDOM, data });
+    // parse html
+    const parsedDOM = new Parse(compiled);
 
-      // serialized processed html
-      const serialized = context.parsedDOM.serialize();
+    // run middleware
+    const context = this.executeMiddleWares({ parsedDOM, data });
 
-      // render serialized
-      return this.render(serialized, page);
-    });
+    // serialized processed html
+    const serialized = context.parsedDOM.serialize();
+
+    // render serialized
+    return this.render(serialized, page);
   }
 
   render(htmlString, page) {
