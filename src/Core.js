@@ -15,7 +15,12 @@ const defaultSettings = {
   engine: null,
   middlewares: [],
   paramSymbol: '@',
-  async data() {},
+  async data() {
+    return Promise.resolve({
+      params: {},
+      data: {}
+    });
+  },
 };
 
 const EVENTS = {
