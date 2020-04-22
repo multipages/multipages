@@ -70,12 +70,17 @@ describe('MultiPage:Core', () => {
       '/products/@category/@subcategory/@productId'
     ];
 
-    const routes = new Core({
+    const plugin = new Core({
       rootPath: './__fixtures__/source',
       pagesPath: './__fixtures__/source'
-    }).createRouterList();
+    });
 
-    expect(routes.map(({route}) => route)).toEqual(expected);
+    const routes = plugin.createRouterList();
+
+    plugin.settings.data().then((dataDefault) => {
+      expect(routes.map(({route}) => route)).toEqual(expected);
+      expect(Object.keys(dataDefault)).toEqual(expect.arrayContaining(['params', 'data']));
+    });
   });
 
   test('should create page list given route list', (done) => {
@@ -137,9 +142,46 @@ describe('MultiPage:Core', () => {
   });
 
   test('should generate output pages', (done) => {
-    // Core.clearPath('./__fixtures__/dist');
+    const expected = [
+      {
+        dirname: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist',
+        filename: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\index.html'
+      },
+      {
+        dirname: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\contact',
+        filename: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\contact\\index.html'
+      },
+      {
+        dirname: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\products',
+        filename: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\products\\index.html'
+      },
+      {
+        dirname: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\products\\technology',
+        filename: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\products\\technology\\index.html'
+      },
+      {
+        dirname: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\products\\sports',
+        filename: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\products\\sports\\index.html'
+      },
+      {
+        dirname: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\products\\technology\\computer',
+        filename: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\products\\technology\\computer\\index.html'
+      },
+      {
+        dirname: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\products\\technology\\monitor',
+        filename: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\products\\technology\\monitor\\index.html'
+      },
+      {
+        dirname: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\products\\technology\\computer\\motherboard',
+        filename: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\products\\technology\\computer\\motherboard\\index.html'
+      },
+      {
+        dirname: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\products\\technology\\monitor\\monitor-27-black',
+        filename: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist\\products\\technology\\monitor\\monitor-27-black\\index.html'
+      }
+    ];
 
-    new Core({
+    const plugin = new Core({
       rootPath: './__fixtures__/source',
       pagesPath: './__fixtures__/source',
       output: './__fixtures__/dist',
@@ -148,10 +190,53 @@ describe('MultiPage:Core', () => {
         return require(`../../__fixtures__/data${route}`);
       }
     })
+
+    plugin
     .run()
-    .then(expected => {
-      expect([]).toEqual([]);
-      done()
+    .then(() => {
+      plugin
+      .run()
+      .then(actual => {
+        expect(actual).toEqual(expect.arrayContaining(expected));
+        done();
+      });
     });
   });
+
+  test('should generate without pass data', (done) => {
+    const plugin = new Core({
+      rootPath: './__fixtures__/source',
+      pagesPath: './__fixtures__/source',
+      output: './__fixtures__/dist',
+      engine: new MultiPageNunjucksExtension(),
+      middlewares: [
+        function(context, next) {
+          next();
+        }
+      ]
+    });
+
+    plugin.run().then(actual => {
+      expect(actual).toBeDefined();
+      done();
+    })
+  });
+
+  test('should emit a error when engine is not defined', (done) => {
+    const plugin = new Core({
+      rootPath: './__fixtures__/source',
+      pagesPath: './__fixtures__/source',
+      output: './__fixtures__/dist',
+      middlewares: [
+        (context, next) => next(),
+      ]
+    });
+
+    plugin.hooks.on(Core.EVENTS.ERROR, (err) => {
+      expect(err.message).toBe(Core.MESSAGES.NOT_ENGINE);
+      done();
+    })
+
+    plugin.run();
+  })
 });

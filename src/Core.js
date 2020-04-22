@@ -6,7 +6,6 @@ const { JSDOM: Parse } = require('jsdom');
 
 const removePath = pathfile => existsSync(pathfile) && rm('-rf', pathfile);
 const resolvePath = (pathfile, context) => resolve(context !== undefined ? context : process.cwd(), pathfile);
-const hasPath = filepath => existsSync(filepath);
 
 const defaultSettings = {
   rootPath: './src/templates',
@@ -16,10 +15,10 @@ const defaultSettings = {
   middlewares: [],
   paramSymbol: '@',
   async data() {
-    return Promise.resolve({
+    return {
       params: {},
       data: {}
-    });
+    };
   },
 };
 
@@ -51,20 +50,17 @@ class Core {
     this.hooks.on(EVENTS.FILE_PATHS_CREATED, () => {});
     this.hooks.on(EVENTS.ERROR, () => {});
 
-    // Verify engine
-    if (!this.settings.engine) {
-      return this.hooks.emit('error', new Error(MESSAGES.NOT_ENGINE));
-    }
-
-    this.engine = this.settings.engine.setup(this.settings.rootPath);
-
     // Set parameter pattern regex
-    this.paramPattern = new RegExp(`(?=${this.settings.paramSymbol})`, 'g');
+    this.paramPattern = new RegExp(`(?:${this.settings.paramSymbol})`, 'g');
 
     // Set cache for rebuild
     this.cache = {
       output: new Set()
     };
+  }
+
+  createRoutePattern() {
+    return new RegExp(`(?:${this.settings.paramSymbol})`, 'g');
   }
 
   createFilePathList(targetPath, ext = /(\.html)$/) {
@@ -149,32 +145,26 @@ class Core {
     const router = routerList || this.createRouterList();
 
     let pages = router.map(async ({ route, file }) => {
+      const hasParam = this.createRoutePattern().test(route);
+      const dataSource = await this.dataHandler(route);
+      const dataSourceList = hasParam && Array.isArray(dataSource) ? dataSource : [dataSource];
 
-      let dataFile;
-
-      if (/(?=@)/g.test(route)) {
-        dataFile = await this.dataHandler(route);
-
-        return dataFile.map(({ params, data }) => {
-          let pagename = this.createPathByParams(route, params);
-
-          return {
-            data: data,
-            route: route,
-            page: pagename,
-            file: file
-          };
-        });
-      }
-
-      let { data } = await this.dataHandler(route);
-
-      return {
-        data: data,
-        route: route,
-        page: route,
-        file: file
+      const sourceDefault = {
+        params: {},
+        data: {}
       };
+
+      return dataSourceList.map(sourceItem => {
+        const { params, data } = Object.assign({}, sourceDefault, sourceItem);
+        const pagename = this.createPathByParams(route, params);
+
+        return {
+          data: data,
+          route: route,
+          page: pagename,
+          file: file
+        };
+      });
     });
 
     // Resolve all promises
@@ -200,23 +190,24 @@ class Core {
     Array.from(this.cache.output).forEach(template => removePath(template));
   }
 
-  createOutput() {
-    !hasPath(this.settings.output) && mkdir('-p', this.settings.output);
-  }
-
   async run() {
+    if (!this.settings.engine) {
+      this.hooks.emit('error', new Error(MESSAGES.NOT_ENGINE));
+      return false;
+    }
+
+    this.engine = this.settings.engine.setup(this.settings.rootPath);
+
     const filePathList = this.createFilePathList(this.settings.pagesPath, this.engine.ext);
     const routerList = this.createRouterList(filePathList);
     const pages = await this.createPageList(routerList);
 
     this.clearOutput();
-    this.createOutput();
 
     return pages.map(({ data, route, page, file }) => {
       const template = resolvePath(`${this.settings.pagesPath}${normalize(`${route}/${file}`)}`);
       const compiled = this.engine.compile(template, data);
 
-      this.cache.output.add(template);
       // parse html
       const parsedDOM = new Parse(compiled);
 
@@ -232,11 +223,18 @@ class Core {
   }
 
   render(htmlString, page) {
+
+    if (this.createRoutePattern().test(page)) {
+      return this.hooks.emit(EVENTS.ERROR, new Error(`The page ${page} don't have params defined!`));
+    }
+
     const dirname = resolvePath(`${this.settings.output}${normalize(page)}`, '');
     const filename = resolvePath('index.html', dirname);
 
-    !hasPath(dirname) && mkdir('-p', dirname);
-    !hasPath(filename) && writeFileSync(filename, htmlString);
+    this.cache.output.add(page ? filename : dirname);
+
+    page && mkdir('-p', dirname);
+    !existsSync(filename) && writeFileSync(filename, htmlString);
 
     return { dirname, filename };
   }
