@@ -11,12 +11,12 @@ const MultiPageNunjucksExtension = require('../../__fixtures__/extensions');
 describe('MultiPage:Core', () => {
   test('should create all html file paths from pagesPath', () => {
     const expected =  [
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\contact\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\products\\@category\\@subcategory\\@productId\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\products\\@category\\@subcategory\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\products\\@category\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\products\\index.html'
+      '/contact/index.html',
+      '/index.html',
+      '/products/@category/@subcategory/@productId/index.html',
+      '/products/@category/@subcategory/index.html',
+      '/products/@category/index.html',
+      '/products/index.html'
     ];
 
     const actualWithpagesPath = new Core({
@@ -36,12 +36,12 @@ describe('MultiPage:Core', () => {
 
   test('should trigger filePathsCreated hook', (done) => {
     const expected =  [
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\contact\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\products\\@category\\@subcategory\\@productId\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\products\\@category\\@subcategory\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\products\\@category\\index.html',
-      'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\source\\products\\index.html'
+      '/contact/index.html',
+      '/index.html',
+      '/products/@category/@subcategory/@productId/index.html',
+      '/products/@category/@subcategory/index.html',
+      '/products/@category/index.html',
+      '/products/index.html'
     ];
 
     const multipages = new Core({
@@ -141,7 +141,7 @@ describe('MultiPage:Core', () => {
     })
   });
 
-  test('should generate output pages', (done) => {
+  test.only('should generate output pages', (done) => {
     const expected = [
       {
         dirname: 'C:\\Users\\simaodeveloper_pc\\Documents\\MonkeyTech\\open-source\\multipages-core\\__fixtures__\\dist',
@@ -193,13 +193,10 @@ describe('MultiPage:Core', () => {
 
     plugin
     .run()
-    .then(() => {
-      plugin
-      .run()
-      .then(actual => {
-        expect(actual).toEqual(expect.arrayContaining(expected));
-        done();
-      });
+    .then(() => plugin.run())
+    .then(actual => {
+      expect(actual).toEqual(expect.arrayContaining(expected));
+      done();
     });
   });
 

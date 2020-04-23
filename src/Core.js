@@ -1,10 +1,9 @@
-const { readdirSync, statSync, existsSync, writeFileSync } = require('fs');
+const { readdirSync, statSync, existsSync } = require('fs');
+const { writeFile, rmdir, unlink } = require('fs').promises;
 const { resolve, normalize } = require('path');
-
 const { rm, mkdir } = require('shelljs');
 const { JSDOM: Parse } = require('jsdom');
 
-const removePath = pathfile => existsSync(pathfile) && rm('-rf', pathfile);
 const resolvePath = (pathfile, context) => resolve(context !== undefined ? context : process.cwd(), pathfile);
 
 const defaultSettings = {
@@ -30,6 +29,14 @@ const EVENTS = {
 const MESSAGES = {
   NOT_ENGINE: 'Please attach a template engine extension at plugin!'
 };
+
+const orderByLength = (pathA, pathB) => {
+  // To order routes from root to more complex
+  const a = pathA.split('/').length + pathA.length;
+  const b = pathB.split('/').length + pathB.length;
+
+  return (a > b) ? 1 : (a < b) ? -1 : 0;
+}
 
 class Core {
   constructor({ settings, hooks }) {
@@ -68,12 +75,16 @@ class Core {
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const filePath = resolvePath(file, directory);
+        let filePath = resolvePath(file, directory);
 
         if (statSync(filePath).isDirectory()) {
           walk(filePath);
           continue;
         }
+
+        filePath = filePath
+          .replace(this.settings.pagesPath, '')
+          .replace(/\\/g, '/');
 
         ext.test(filePath) && paths.push(filePath);
       }
@@ -93,16 +104,10 @@ class Core {
     const paths = filePaths || this.createFilePathList();
     const routerList = paths
       .map(path => {
-        let route = path
-          // remove rootPath
-          .replace(this.settings.pagesPath, '')
-          // change double back-slash to a single slash
-          .replace(/\\/g, '/');
-
-        let routeSplit = route.split('/');
+        let routeSplit = path.split('/');
 
         // remove filename and extension
-        route = routeSplit.slice(0, routeSplit.length - 1).join('/');
+        let route = routeSplit.slice(0, routeSplit.length - 1).join('/');
 
         // fix root and return route and file
         return {
@@ -110,13 +115,9 @@ class Core {
           file: routeSplit[routeSplit.length - 1]
         };
       })
-      .sort((routeA, routeB) => {
-        // To order routes from root to more complex
-        const a = routeA.route.split('/').length + routeA.route.length;
-        const b = routeB.route.split('/').length + routeB.route.length;
+      .sort((rA, rB) => orderByLength(rA.route, rB.route));
 
-        return (a > b) ? 1 : (a < b) && -1;
-      });
+    console.log(routerList);
 
     return routerList;
   }
@@ -179,8 +180,17 @@ class Core {
     return next() || context;
   }
 
-  clearOutput() {
-    Array.from(this.cache.output).forEach(template => removePath(template));
+  async clearOutput() {
+
+    const finishedProcess = Array.from(this.cache.output).sort(orderByLength).reverse().map(template => {
+      if (existsSync(template)) {
+        return statSync(template).isDirectory()
+          ? rmdir(template, { recursive: true })
+          : unlink(template);
+      }
+    });
+
+    return await Promise.all(finishedProcess);
   }
 
   async run() {
@@ -195,13 +205,16 @@ class Core {
     const routerList = this.createRouterList(filePathList);
     const pages = await this.createPageList(routerList);
 
-    this.clearOutput();
+    await this.clearOutput();
 
-    return pages.map((options) => this.handlePage(options));
+    let pagesPathList = pages.map((options) => this.handlePage(options));
+
+    return Promise.all(pagesPathList);
   }
 
   handlePage({ data, route, page, file }) {
-    const template = resolvePath(`${this.settings.pagesPath}${normalize(`${route}/${file}`)}`);
+    const path = `${route}/${file}`;
+    const template = resolvePath(`${this.settings.pagesPath}${normalize(path)}`);
     const compiled = this.engine.compile(template, data);
 
     // parse html
@@ -218,6 +231,7 @@ class Core {
   }
 
   render(htmlString, page) {
+    const isRoot = () => page === '/';
 
     if (this.createRoutePattern().test(page)) {
       return this.hooks.emit(EVENTS.ERROR, new Error(`The page ${page} don't have params defined!`));
@@ -226,12 +240,15 @@ class Core {
     const dirname = resolvePath(`${this.settings.output}${normalize(page)}`, '');
     const filename = resolvePath('index.html', dirname);
 
-    this.cache.output.add(page ? filename : dirname);
+    isRoot() && existsSync(this.settings.output) && mkdir('-p', this.settings.output);
+    !isRoot() && mkdir('-p', dirname);
 
-    page && mkdir('-p', dirname);
-    !existsSync(filename) && writeFileSync(filename, htmlString);
-
-    return { dirname, filename };
+    return writeFile(filename, htmlString, 'utf8')
+      .then(() => {
+        this.cache.output.add(isRoot() ? filename : dirname);
+        return { dirname, filename };
+      })
+      .catch(err => this.hooks.emit(EVENTS.ERROR, err));
   }
 }
 
