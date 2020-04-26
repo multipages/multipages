@@ -1,11 +1,11 @@
 {
-  "name": "nunjucks-template-plugin",
+  "name": "advanced-generate-pages",
   "version": "1.0.0",
   "description": "",
   "main": "webpack.config.js",
   "scripts": {
     "start": "webpack --mode production",
-    "test": "jest"
+    "dev": "webpack-dev-server"
   },
   "keywords": [],
   "author": "",
@@ -17,28 +17,13 @@
     "@babel/polyfill": "^7.8.3",
     "@babel/preset-env": "^7.8.2",
     "@babel/register": "^7.8.0",
-    "@commitlint/cli": "^8.3.5",
-    "@commitlint/config-conventional": "^8.3.4",
     "babel-loader": "^8.0.6",
     "css-loader": "^3.4.2",
-    "husky": "^4.2.5",
-    "lint-staged": "^10.1.3",
     "mini-css-extract-plugin": "^0.9.0",
-    "mock-fs": "^4.11.0",
-    "nunjucks": "^3.2.1",
     "sass": "^1.24.4",
     "sass-loader": "^8.0.2",
-    "standard": "^14.3.3",
-    "standard-version": "^7.1.0",
     "webpack": "^4.42.1",
-    "webpack-cli": "^3.3.11"
-  },
-  "dependencies": {
-    "html-minifier-terser": "^5.0.5",
-    "jest": "^25.3.0",
-    "jest-cli": "^25.3.0",
-    "jsdom": "^16.2.2",
-    "parse5": "^6.0.0",
-    "shelljs": "^0.8.3"
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.10.3"
   }
 }
