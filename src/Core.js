@@ -1,258 +1,132 @@
-const { readdirSync, statSync, existsSync } = require('fs');
-const { writeFile, rmdir, unlink } = require('fs').promises;
-const { resolve, normalize } = require('path');
-const { rm, mkdir } = require('shelljs');
-const { JSDOM: Parse } = require('jsdom');
+const { resolve } = require('path');
+const { existsSync, rmdirSync, unlinkSync } = require('fs');
+const { stat, readFile, readdir, writeFile, mkdir } = require('fs').promises;
 
-const resolvePath = (pathfile, context) => resolve(context !== undefined ? context : process.cwd(), pathfile);
+const { JSDOM: Parser } = require('jsdom');
 
-const defaultSettings = {
-  rootPath: './src/templates',
-  pagesPath: './src/templates/pages',
-  output: './dist',
-  engine: null,
-  middlewares: [],
-  paramSymbol: '@',
-  async data() {
-    return {
-      params: {},
-      data: {}
-    };
-  },
-};
+const Page = require('./Page');
 
-const EVENTS = {
-  FILE_PATHS_CREATED: 'filePathsCreated',
-  ERROR: 'error'
-};
+const sortByDescRoute = (a, b) => {
+  const aSize = a.extractRoute().split('/').length
+  const bSize = b.extractRoute().split('/').length;
 
-const MESSAGES = {
-  NOT_ENGINE: 'Please attach a template engine extension at plugin!'
-};
-
-const orderByLength = (pathA, pathB) => {
-  // To order routes from root to more complex
-  const a = pathA.split('/').length + pathA.length;
-  const b = pathB.split('/').length + pathB.length;
-
-  return (a > b) ? 1 : (a < b) ? -1 : 0;
+  return (aSize > bSize) ? 1 : (aSize < bSize) ? -1 : 0;
 }
 
-class Core {
-  constructor({ settings, hooks }) {
-    // Set Dependencies
+module.exports = class Core {
+  constructor({
+    settings,
+    data,
+    hooks,
+    engine,
+    middlewares
+  }) {
+    // dependêncies
+    this.settings = settings;
+    this.pagesPath = resolve(process.cwd(), settings.pagesPath);
+    this.output = resolve(process.cwd(), settings.output);
+    this.data = data;
     this.hooks = hooks;
+    this.engine = engine;
+    this.middlewares = middlewares;
 
-    this.settings = {
-      ...defaultSettings,
-      ...settings
-    };
+    // state
+    this.sourceFiles = [];
 
-    // Fix Paths
-    this.settings.rootPath = resolvePath(this.settings.rootPath);
-    this.settings.pagesPath = resolvePath(this.settings.pagesPath);
-    this.settings.output = resolvePath(this.settings.output);
+    // hooks
+    this.hooks.on('fetchPagesPathHook', () => {});
+    this.hooks.on('injectDataSourceHook', () => {});
+    this.hooks.on('pagesRenderedHook', () => {});
 
-    // Define Hooks
-    this.hooks.on(EVENTS.FILE_PATHS_CREATED, () => {});
-    this.hooks.on(EVENTS.ERROR, () => {});
-
-    // Set cache for rebuild
-    this.cache = {
-      output: new Set()
-    };
+    // engine
+    this.engine.setup({
+      includesPath: settings.includesPath
+    });
   }
 
-  createRoutePattern() {
-    return new RegExp(`(?:${this.settings.paramSymbol})`, 'g');
+  async generatePagesPath() {
+    this.pagesPathList = await Page.fetchPagesPath(this.pagesPath);
+    this.hooks.emit('fetchPagesPathHook', this.pagesPathList);
   }
 
-  createFilePathList(targetPath, ext = /(\.html)$/) {
-    const paths = [];
+  async generatePages() {
+    this.pages = this.pagesPathList.map(async (pagePath) => {
+      const page = new Page(this.pagesPath, pagePath);
+      const route = page.extractRoute();
+      const dataSources = await this.data.fetch(route);
 
-    const walk = (directory) => {
-      const files = readdirSync(directory);
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        let filePath = resolvePath(file, directory);
-
-        if (statSync(filePath).isDirectory()) {
-          walk(filePath);
-          continue;
-        }
-
-        filePath = filePath
-          .replace(this.settings.pagesPath, '')
-          .replace(/\\/g, '/');
-
-        ext.test(filePath) && paths.push(filePath);
-      }
-    };
-
-    walk(targetPath
-      ? resolvePath(targetPath)
-      : resolvePath(this.settings.pagesPath)
-    );
-
-    this.hooks.emit('filePathsCreated', paths);
-
-    return paths;
-  }
-
-  createRouterList(filePaths) {
-    const paths = filePaths || this.createFilePathList();
-    const routerList = paths
-      .map(path => {
-        let routeSplit = path.split('/');
-
-        // remove filename and extension
-        let route = routeSplit.slice(0, routeSplit.length - 1).join('/');
-
-        // fix root and return route and file
-        return {
-          route: (route) ? route : '/',
-          file: routeSplit[routeSplit.length - 1]
-        };
-      })
-      .sort((rA, rB) => orderByLength(rA.route, rB.route));
-
-    console.log(routerList);
-
-    return routerList;
-  }
-
-  dataHandler(route) {
-    return this.settings.data(route);
-  }
-
-  async routeHandler({ route, file }) {
-    const hasParam = this.createRoutePattern().test(route);
-    const dataSource = await this.dataHandler(route);
-    const dataSourceList = hasParam && Array.isArray(dataSource) ? dataSource : [dataSource];
-
-    return dataSourceList.map(source => this.dataSourceHandler(route, file, source));
-  }
-
-  dataSourceHandler(route, file, sourceItem) {
-    const sourceDefault = { params: {}, data: {} };
-    const { params, data } = Object.assign({}, sourceDefault, sourceItem);
-    const page = this.createPathByParams(route, params);
-
-    return { data, route, page, file };
-  }
-
-  createPathByParams(route, params) {
-    let pagename = route;
-
-    Object.keys(params).forEach(id => pagename = pagename.replace(id, params[id]));
-
-    return pagename;
-  }
-
-
-  /**
-   * @method createPageList
-   * @description generate a list of info of all pages with data, route, page (final path)
-   * @param {Array} routeList
-   */
-  async createPageList(routerList) {
-    const router = routerList || this.createRouterList();
-
-    let pages = router.map(options => this.routeHandler(options));
-
-    // Resolve all promises
-    pages = await Promise.all(pages)
-
-    // Flattening all pages
-    return pages.flat(Infinity);
-  }
-
-  executeMiddleWares(context) {
-    const middlewares = [...this.settings.middlewares];
-    const length = middlewares.length;
-    let counter = 0;
-
-    const next = () => (counter < length)
-      ? middlewares[counter++](context, next)
-      : context;
-
-    return next() || context;
-  }
-
-  async clearOutput() {
-
-    const finishedProcess = Array.from(this.cache.output).sort(orderByLength).reverse().map(template => {
-      if (existsSync(template)) {
-        return statSync(template).isDirectory()
-          ? rmdir(template, { recursive: true })
-          : unlink(template);
-      }
+      return Page.extractPagesFromSource(dataSources, page);
     });
 
-    return await Promise.all(finishedProcess);
+    this.pages = await Promise.all(this.pages);
+
+    this.pages = this.pages.flat(Infinity);
+
+    this.pages = [...this.pages.sort(sortByDescRoute)];
   }
 
-  async run() {
-    if (!this.settings.engine) {
-      this.hooks.emit('error', new Error(MESSAGES.NOT_ENGINE));
-      return false;
+  async compile() {
+
+    try {
+      await stat(this.output);
+    } catch(err) {
+      await mkdir(this.output, {
+        encoding: 'utf8'
+      });
     }
 
-    this.engine = this.settings.engine.setup(this.settings.rootPath);
+    const renderedPages = this.pages.map(async (page) => {
+      const compiled = this.engine.compile(await page.fetchTemplate(), page.dataSource);
 
-    const filePathList = this.createFilePathList(this.settings.pagesPath, this.engine.ext);
-    const routerList = this.createRouterList(filePathList);
-    const pages = await this.createPageList(routerList);
+      const parsed = new Parser(compiled);
 
-    await this.clearOutput();
+      this.middlewares.execute({ parsed, dataSource: page.dataSource });
 
-    let pagesPathList = pages.map((options) => this.handlePage(options));
+      const serialized = parsed.serialize();
 
-    return Promise.all(pagesPathList);
+      return await this.render(serialized, page);
+    });
+
+    this.hooks.emit('pagesRenderedHook', await Promise.all(renderedPages));
   }
 
-  handlePage({ data, route, page, file }) {
-    const path = `${route}/${file}`;
-    const template = resolvePath(`${this.settings.pagesPath}${normalize(path)}`);
-    const compiled = this.engine.compile(template, data);
-
-    // parse html
-    const parsedDOM = new Parse(compiled);
-
-    // run middleware
-    const context = this.executeMiddleWares({ parsedDOM, data });
-
-    // serialized processed html
-    const serialized = context.parsedDOM.serialize();
-
-    // render serialized
-    return this.render(serialized, page);
+  async injectAssets() {
+    await this.data.inject(this.pages, ({ path, dataSource }) =>
+      this.hooks.emit('injectDataSourceHook', { path, dataSource })
+    );
   }
 
-  render(htmlString, page) {
-    const isRoot = () => page === '/';
+  async render(template, page) {
+    const dir = resolve(`${this.output}${page.path}`);
+    const output = resolve(dir, 'index.html');
 
-    if (this.createRoutePattern().test(page)) {
-      return this.hooks.emit(EVENTS.ERROR, new Error(`The page ${page} don't have params defined!`));
+    if (page.extractRoute() !== '/' && !existsSync(dir)) {
+      try {
+        await mkdir(dir, {
+          encoding: 'utf8'
+        });
+      } catch(err) {
+        console.log(err);
+      }
     }
 
-    const dirname = resolvePath(`${this.settings.output}${normalize(page)}`, '');
-    const filename = resolvePath('index.html', dirname);
+    try {
+      await writeFile(output, template, {
+        encoding: 'utf8',
+        flag: 'w+'
+      });
+    } catch(err) {
+      console.log(err);
+    }
 
-    isRoot() && existsSync(this.settings.output) && mkdir('-p', this.settings.output);
-    !isRoot() && mkdir('-p', dirname);
-
-    return writeFile(filename, htmlString, 'utf8')
-      .then(() => {
-        this.cache.output.add(isRoot() ? filename : dirname);
-        return { dirname, filename };
-      })
-      .catch(err => this.hooks.emit(EVENTS.ERROR, err));
+    return { dir, output, path: page.path };
   }
+
+  async execute() {
+    await this.generatePagesPath();
+    await this.generatePages();
+    await this.injectAssets();
+    await this.compile();
+  }
+
 }
-
-Core.EVENTS = EVENTS;
-Core.MESSAGES = MESSAGES;
-
-module.exports = Core;

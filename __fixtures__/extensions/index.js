@@ -8,11 +8,11 @@ module.exports = class TemplateEngineNunjucksExtension {
       ...options
     };
 
-    this.reExtensions = /\.(njk|nunjucks|html)$/g;
+    this.ext = /\.(njk|nunjucks|html)$/g;
   }
 
-  setup(rootPath) {
-    this.loader = new nunjucks.FileSystemLoader(rootPath);
+  setup({ includePaths }) {
+    this.loader = new nunjucks.FileSystemLoader(includePaths);
     this.engine = new nunjucks.Environment(this.loader);
 
     this.options.filters.forEach((...options) => this.addFilter(...options));

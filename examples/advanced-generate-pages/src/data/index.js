@@ -1,5 +1,7 @@
-module.exports = {
-  data: {
-    title: 'Home'
+module.exports = [
+  {
+    data: {
+      title: 'Home'
+    }
   }
-}
+]
