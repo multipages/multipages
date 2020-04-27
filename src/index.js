@@ -9,9 +9,6 @@ let m = new CoreAdapter({
   }
 });
 
-m.execute()
-  .then(() => {
-    m.execute();
-  });
+m.execute().then(() => m.execute());
 
 module.exports = CoreAdapter;

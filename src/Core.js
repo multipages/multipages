@@ -1,6 +1,7 @@
 const { resolve } = require('path');
 const { existsSync, rmdirSync, unlinkSync } = require('fs');
-const { stat, readFile, readdir, writeFile, mkdir } = require('fs').promises;
+const { stat, readFile, readdir, writeFile } = require('fs').promises;
+const { mkdir, rm } = require('shelljs');
 
 const { JSDOM: Parser } = require('jsdom');
 
@@ -70,12 +71,10 @@ module.exports = class Core {
     try {
       await stat(this.output);
     } catch(err) {
-      await mkdir(this.output, {
-        encoding: 'utf8'
-      });
+      mkdir('-p', this.output);
     }
 
-    const renderedPages = this.pages.map(async (page) => {
+    this.renderedPages = this.pages.map(async (page) => {
       const compiled = this.engine.compile(await page.fetchTemplate(), page.dataSource);
 
       const parsed = new Parser(compiled);
@@ -87,7 +86,9 @@ module.exports = class Core {
       return await this.render(serialized, page);
     });
 
-    this.hooks.emit('pagesRenderedHook', await Promise.all(renderedPages));
+    this.renderedPages = await Promise.all(this.renderedPages);
+
+    this.hooks.emit('pagesRenderedHook', this.renderedPages);
   }
 
   async injectAssets() {
@@ -101,32 +102,37 @@ module.exports = class Core {
     const output = resolve(dir, 'index.html');
 
     if (page.extractRoute() !== '/' && !existsSync(dir)) {
-      try {
-        await mkdir(dir, {
-          encoding: 'utf8'
-        });
-      } catch(err) {
-        console.log(err);
-      }
+      mkdir('-p', dir);
     }
 
-    try {
-      await writeFile(output, template, {
-        encoding: 'utf8',
-        flag: 'w+'
-      });
-    } catch(err) {
-      console.log(err);
-    }
+    await writeFile(output, template, {
+      encoding: 'utf8',
+      flag: 'w+'
+    });
 
     return { dir, output, path: page.path };
   }
 
+  async eraseOutput() {
+    if (this.renderedPages) {
+      this.renderedPages
+        .filter(page => page.path.split('/').length <= 3)
+        .forEach(page => (page.path !== '/') && rm('-rf', page.output));
+
+      this.renderedPages = [];
+    }
+  }
+
   async execute() {
-    await this.generatePagesPath();
-    await this.generatePages();
-    await this.injectAssets();
-    await this.compile();
+    try {
+      await this.eraseOutput();
+      await this.generatePagesPath();
+      await this.generatePages();
+      await this.injectAssets();
+      await this.compile();
+    } catch(e) {
+      console.log(e);
+    }
   }
 
 }
